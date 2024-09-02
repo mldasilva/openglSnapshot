@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "g++",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:\\glfw-3.3.9.bin.WIN64\\include",
+                "C:\\glew-2.1.0\\include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.22000.0",
+            "cppStandard": "c++17",
+            "compilerPath": "C:/mingw64/bin/g++.exe",
+            "intelliSenseMode": "linux-gcc-x64",
+            "cStandard": "c99",
+            "compilerArgs": []
+        }
+    ],
+    "version": 4
+}
