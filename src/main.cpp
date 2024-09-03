@@ -1,13 +1,15 @@
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
+#ifndef main_only
+#define main_only
 
-#include <GL/glew.h>        // must be before glfw
-#include <GLFW/glfw3.h>
-
-#include <iostream>
+#include "main.h"
+#include "glmath.h"
 
 #include "imGui_wrapper.h"
+#include "model.h"
+
+
+
+#endif 
 
 int main(void)
 {
@@ -16,6 +18,8 @@ int main(void)
     /* Initialize the library */
     if (!glfwInit())
         return -1;
+
+    glfw_hints();
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(1280, 720, "Hello World", NULL, NULL);
@@ -33,7 +37,18 @@ int main(void)
     glew site: First you need to create a valid OpenGL rendering context and call glewInit() to initialize the extension entry points*/ 
     if (GLEW_OK != glewInit()) return -1;
 
+    init_glfw_debugger(window);
+
     imGui_wrapper _imguiWrapper(window);
+    model _model("../res/models/2cone.gltf");
+
+    glm::vec3 vector3 = glm::vec3(1,0.5f,0);
+    
+    // size_t size = _model._json["accessors"].size();
+    // json j = _model._json;
+    // cout << "\njson data:" << j.dump(4) << endl;
+    
+    cout << vector3 << endl;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
