@@ -3,7 +3,7 @@ GLEW 	= c:/glew-2.1.0/include
 IMGUI 	= ../lib/imgui
 IMGUIB 	= ../lib/imgui/backends
 JSON 	= ../lib/json
-GLM		= ../lib/glm
+GLM		= ../lib/glm # v 1.0.1
 
 ifeq ($(OS),Windows_NT)
 	GLFWLib = c:/glfw-3.3.9.bin.WIN64/lib-mingw-w64
@@ -25,14 +25,14 @@ imgui = imgui.o imgui_draw.o imgui_widgets.o imgui_tables.o imgui_impl_glfw.o im
 run: output
 	rm main.o && clear && echo $(OS) && ../bin/$(NAME)
 
-output: main.o $(imgui) imGui_wrapper.o model.o
+output: main.o model.o $(imgui) imGui_wrapper.o 
 	g++ $^ -o ../bin/$(NAME) $(LIBRARIES) $(LINK_FLAGS) -g
 
 main.o: main.cpp
 	g++ -c $^ $(INCLUDES) $(IMGUI_INCLUDES) $(JSON_INCLUDES) $(GLM_INCLUDES)
 
 model.o: model.cpp
-	g++ -c $< $(JSON_INCLUDES) -o $@
+	g++ -c $< $(JSON_INCLUDES) $(GLM_INCLUDES) -o $@
 
 imGui_wrapper.o: imGui_wrapper.cpp
 	g++ -c $< $(IMGUI_INCLUDES) $(GLFW_INCLUDES) -o $@

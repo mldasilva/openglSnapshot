@@ -7,8 +7,6 @@
 #include "imGui_wrapper.h"
 #include "model.h"
 
-
-
 #endif 
 
 int main(void)
@@ -39,17 +37,14 @@ int main(void)
 
     init_glfw_debugger(window);
 
+    // ==================================================================
+    // test
+    // ==================================================================
+
     imGui_wrapper _imguiWrapper(window);
-    model _model("../res/models/2cone.gltf");
+    model _model("../res/models/cube.gltf");
 
-    glm::vec3 vector3 = glm::vec3(1,0.5f,0);
     
-    // size_t size = _model._json["accessors"].size();
-    // json j = _model._json;
-    // cout << "\njson data:" << j.dump(4) << endl;
-    
-    cout << vector3 << endl;
-
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {

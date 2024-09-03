@@ -1,5 +1,4 @@
 #include "model.h"
-#include <iostream>
 
 model::model(const char* file)
 {
@@ -9,6 +8,8 @@ model::model(const char* file)
 	// Get the binary data
 	model::filepath = file;
 	data = get_data();
+
+	loadMesh(0); // currently only loading first mesh in the gltf
 }
 
 model::~model()
@@ -144,49 +145,97 @@ vector<uint> model::get_indices(json accessor)
 void model::loadMesh(uint indexMesh)
 {
 	// Get all accessor indices
-	uint posAccInd 		= _json["meshes"][indexMesh]["primitives"][0]["attributes"]["POSITION"];
-	uint normalAccInd 	= _json["meshes"][indexMesh]["primitives"][0]["attributes"]["NORMAL"];
-	uint texAccInd 		= _json["meshes"][indexMesh]["primitives"][0]["attributes"]["TEXCOORD_0"];
-	uint indAccInd 		= _json["meshes"][indexMesh]["primitives"][0]["indices"];
+	uint posAccIndex 		= _json["meshes"][indexMesh]["primitives"][0]["attributes"]["POSITION"];
+	uint normalAccIndex 	= _json["meshes"][indexMesh]["primitives"][0]["attributes"]["NORMAL"];
+	uint texAccIndex 		= _json["meshes"][indexMesh]["primitives"][0]["attributes"]["TEXCOORD_0"];
+	uint indAccIndex 		= _json["meshes"][indexMesh]["primitives"][0]["indices"];
 
 	// Use accessor indices to get all vertices components
-	vector<float> posVec = get_floats(_json["accessors"][posAccInd]);
-	// vector<glm::vec3> positions = groupFloatsVec3(posVec);
-	// vector<float> normalVec = get_floats(_json["accessors"][normalAccInd]);
-	// vector<glm::vec3> normals = groupFloatsVec3(normalVec);
-	// vector<float> texVec = get_floats(_json["accessors"][texAccInd]);
-	// vector<glm::vec2> texUVs = groupFloatsVec2(texVec);
+	vector<float> posVec 	= get_floats(_json["accessors"][posAccIndex]);
+	vector<vec3> positions 	= group_floats_into_vec3(posVec);
+
+	vector<float> normalVec = get_floats(_json["accessors"][normalAccIndex]);
+	vector<vec3> normals 	= group_floats_into_vec3(normalVec);
+
+	vector<float> texVec 	= get_floats(_json["accessors"][texAccIndex]);
+	vector<vec2> texUVs 	= group_floats_into_vec2(texVec);
 
 	// // Combine all the vertex components and also get the indices and textures
-	// vector<Vertex> vertices = assembleVertices(positions, normals, texUVs);
-	// vector<GLuint> indices = getIndices(JSON["accessors"][indAccInd]);
+	vertices 	= group_vecs_into_vertices(positions, normals, texUVs);
+	indices 	= get_indices(_json["accessors"][indAccIndex]);
 	// vector<Texture> textures = getTextures();
 
-	// // Combine the vertices, indices, and textures into a mesh
+	// Combine the vertices, indices, and textures into a mesh
 	// meshes.push_back(Mesh(vertices, indices, textures));
 }
 
-// vector<Vertex> model::assembleVertices
-// (
-// 	vector<glm::vec3> positions,
-// 	vector<glm::vec3> normals,
-// 	vector<glm::vec2> texUVs
-// )
-// {
-// 	vector<Vertex> vertices;
-// 	for (int i = 0; i < positions.size(); i++)
-// 	{
-// 		vertices.push_back
-// 		(
-// 			Vertex
-// 			{
-// 				positions[i],
-// 				normals[i],
-// 				glm::vec3(1.0f, 1.0f, 1.0f),
-// 				texUVs[i]
-// 			}
-// 		);
-// 	}
-// 	return vertices;
-// }
+vector<vertex> model::group_vecs_into_vertices(vector<vec3> positions, vector<vec3> normals, vector<vec2> texUVs)
+{
+	vector<vertex> vertices;
+	for (int i = 0; i < positions.size(); i++)
+	{
+		vertices.push_back
+		(
+			vertex
+			{
+				positions[i],
+				normals[i],
+				texUVs[i]
+			}
+		);
+	}
+	return vertices;
+}
 
+vector<vec2> model::group_floats_into_vec2(vector<float> floatVec)
+{
+	vector<vec2> vectors;
+	for (int i = 0; i < floatVec.size();)
+	{
+		vectors.push_back(vec2(floatVec[i], floatVec[i+1]));
+		i+=2;
+	}
+	return vectors;
+}
+
+vector<vec3> model::group_floats_into_vec3(vector<float> floatVec)
+{
+	vector<vec3> vectors;
+	for (int i = 0; i < floatVec.size();)
+	{
+		// compile increments from right to left, doing it this way would require rotation later
+		// vectors.push_back(vec3(floatVec[i++], floatVec[i++], floatVec[i++]));
+		vectors.push_back(vec3(floatVec[i], floatVec[i+1], floatVec[i+2]));
+		i+=3;
+	}
+	return vectors;
+}
+
+vector<vec4> model::group_floats_into_vec4(vector<float> floatVec)
+{
+	vector<vec4> vectors;
+	for (int i = 0; i < floatVec.size();)
+	{
+		vectors.push_back(vec4(floatVec[i], floatVec[i+1], floatVec[i+2], floatVec[i+3]));
+		i += 4;
+	}
+	return vectors;
+}
+
+void model::cout_vertices()
+{
+	for (size_t i = 0; i < vertices.size(); i++)
+    {
+        cout << "[" << i << "]"<< vertices[i].position;
+        cout << vertices[i].normal;
+        cout << vertices[i].texUV << endl;
+    }
+}
+
+void model::cout_indicies()
+{
+    for (size_t i = 0; i < indices.size(); i++)
+    {
+        cout << indices[i] << endl;
+    }
+}
