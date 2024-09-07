@@ -1,3 +1,4 @@
 /src/*.o
 /src/*.ini
 /bin/*
+/res/models/*

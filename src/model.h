@@ -13,16 +13,8 @@
 using namespace std;
 using namespace nlohmann;
 using namespace glm;
-// mesh
-// class mesh
-// {
-// public:
-// 	vector <float> vertices;
-// 	vector <uint> indices;
-// };
 
-// model
-class model{
+class model {
 private:
     const char* filepath;
     vector<uchar> data;
@@ -49,7 +41,7 @@ public:
     ~model();   
 
     void cout_vertices();
-    void cout_indicies(); 
+    void cout_indices(); 
 };
 
 #endif

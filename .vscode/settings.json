@@ -59,6 +59,8 @@
         "sstream": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "fstream": "cpp"
+        "fstream": "cpp",
+        "buffer": "cpp",
+        "netfwd": "cpp"
     }
 }

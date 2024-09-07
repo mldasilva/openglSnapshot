@@ -232,7 +232,7 @@ void model::cout_vertices()
     }
 }
 
-void model::cout_indicies()
+void model::cout_indices()
 {
     for (size_t i = 0; i < indices.size(); i++)
     {

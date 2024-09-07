@@ -4,6 +4,7 @@ IMGUI 	= ../lib/imgui
 IMGUIB 	= ../lib/imgui/backends
 JSON 	= ../lib/json
 GLM		= ../lib/glm # v 1.0.1
+GLMEXT	= ../lib/glm/ext
 
 ifeq ($(OS),Windows_NT)
 	GLFWLib = c:/glfw-3.3.9.bin.WIN64/lib-mingw-w64
@@ -12,10 +13,11 @@ endif
 
 LINK_FLAGS 		= -lglfw3dll -lglew32 -lopengl32 -Wall #-mwindows
 INCLUDES 		= -I $(GLFW) -I $(GLEW) 
+GLEW_INLCUDES	= -I $(GLEW)
 GLFW_INCLUDES	= -I $(GLFW)
 IMGUI_INCLUDES 	= -I $(IMGUI) -I $(IMGUIB)
 JSON_INCLUDES 	= -I $(JSON)
-GLM_INCLUDES	= -I $(GLM)
+GLM_INCLUDES	= -I $(GLM) -I $(GLMEXT)
 LIBRARIES 		= -L $(GLFWLib) -L $(GLEWLib)
 
 
@@ -25,7 +27,7 @@ imgui = imgui.o imgui_draw.o imgui_widgets.o imgui_tables.o imgui_impl_glfw.o im
 run: output
 	rm main.o && clear && echo $(OS) && ../bin/$(NAME)
 
-output: main.o model.o $(imgui) imGui_wrapper.o 
+output: main.o model.o gl_shaders.o $(imgui) imGui_wrapper.o 
 	g++ $^ -o ../bin/$(NAME) $(LIBRARIES) $(LINK_FLAGS) -g
 
 main.o: main.cpp
@@ -58,7 +60,10 @@ imgui_impl_glfw.o: ../lib/imgui/backends/imgui_impl_glfw.cpp
 imgui_impl_opengl3.o: ../lib/imgui/backends/imgui_impl_opengl3.cpp
 	g++ -c $< $(IMGUI_INCLUDES) -o $@
 
+gl_shaders.o: gl_shaders.cpp 
+	g++ -c $< $(GLEW_INLCUDES) $(GLM_INCLUDES) -o $@
+
 clean:
-	rm *.o *.pcm
+	rm *.o
 del: 
 	rm ../bin/game.exe

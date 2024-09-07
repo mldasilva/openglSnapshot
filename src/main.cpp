@@ -6,13 +6,13 @@
 
 #include "imGui_wrapper.h"
 #include "model.h"
+#include "gl_shaders.h"
 
 #endif 
 
 int main(void)
 {
     GLFWwindow* window;
-
     /* Initialize the library */
     if (!glfwInit())
         return -1;
@@ -27,6 +27,9 @@ int main(void)
         return -1;
     }
 
+    float width = 1280;
+    float height = 720;
+    
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
@@ -37,26 +40,34 @@ int main(void)
 
     init_glfw_debugger(window);
 
-    // ==================================================================
-    // test
-    // ==================================================================
-
+    // ===============================================================
+    // main
+    // ===============================================================
     imGui_wrapper _imguiWrapper(window);
-    model _model("../res/models/cube.gltf");
+    camera camera(width, height);
+    shader shader("../res/shaders/default.vs", "../res/shaders/default.fs");
+    renderPool rp;
 
+    model cube("../res/models/cone.gltf");
+    model cone("../res/models/cube.gltf");
     
+    
+    rp.insert(cone.vertices, cone.indices, vec3(3,0,3));
+    rp.insert(cube.vertices, cube.indices, vec3(1,0,-5));
+    
+
+    shader.create_ssbo(0, rp.matrices.size() * sizeof(mat4), rp.matrices.data());
+    bufferObject bo(rp.vertices, 8, rp.indices, rp.commands);
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
         
-        glBegin(GL_TRIANGLES);
-        glVertex2f(-0.5f, -0.5f);
-        glVertex2f(0.0f, 0.5f);
-        glVertex2f(0.5f, -0.5f);
-        glEnd();
-
+        shader.draw(camera, bo);
+        // camera.rotate(0.5f);
+    
         _imguiWrapper.start_frame();
         _imguiWrapper.demo();
         _imguiWrapper.rendering();
