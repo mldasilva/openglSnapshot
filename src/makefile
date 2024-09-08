@@ -20,14 +20,13 @@ JSON_INCLUDES 	= -I $(JSON)
 GLM_INCLUDES	= -I $(GLM) -I $(GLMEXT)
 LIBRARIES 		= -L $(GLFWLib) -L $(GLEWLib)
 
-
 NAME = game.exe
 imgui = imgui.o imgui_draw.o imgui_widgets.o imgui_tables.o imgui_impl_glfw.o imgui_impl_opengl3.o imgui_demo.o
 
 run: output
 	rm main.o && clear && echo $(OS) && ../bin/$(NAME)
 
-output: main.o model.o gl_shaders.o $(imgui) imGui_wrapper.o 
+output: main.o model.o gl_shaders.o camera.o controller.o $(imgui) imGui_wrapper.o 
 	g++ $^ -o ../bin/$(NAME) $(LIBRARIES) $(LINK_FLAGS) -g
 
 main.o: main.cpp
@@ -36,6 +35,19 @@ main.o: main.cpp
 model.o: model.cpp
 	g++ -c $< $(JSON_INCLUDES) $(GLM_INCLUDES) -o $@
 
+gl_shaders.o: gl_shaders.cpp 
+	g++ -c $< $(GLEW_INLCUDES) $(GLM_INCLUDES) -o $@
+
+camera.o: camera.cpp
+	g++ -c $< $(GLM_INCLUDES) -o $@
+
+controller.o : controller.cpp
+	g++ -c $< $(GLFW_INCLUDES) $(GLM_INCLUDES) -o $@
+
+
+
+
+# imgui
 imGui_wrapper.o: imGui_wrapper.cpp
 	g++ -c $< $(IMGUI_INCLUDES) $(GLFW_INCLUDES) -o $@
 
@@ -60,8 +72,7 @@ imgui_impl_glfw.o: ../lib/imgui/backends/imgui_impl_glfw.cpp
 imgui_impl_opengl3.o: ../lib/imgui/backends/imgui_impl_opengl3.cpp
 	g++ -c $< $(IMGUI_INCLUDES) -o $@
 
-gl_shaders.o: gl_shaders.cpp 
-	g++ -c $< $(GLEW_INLCUDES) $(GLM_INCLUDES) -o $@
+
 
 clean:
 	rm *.o

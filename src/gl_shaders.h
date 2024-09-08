@@ -11,6 +11,7 @@
 #include <vector>
 
 #include "glmath.h"
+#include "camera.h"
 
 // https://ktstephano.github.io/rendering/opengl/mdi
 // Struct for MultiDrawElements
@@ -25,7 +26,6 @@ struct DrawElementsIndirectCommand{
     // indexOffset     += objects.object[i].indexCount;
     // vertexOffset    += objects.object[i].vertexCount;
     // instanceOffset  += 1;
-
 
     //For DrawElementsIndirectCommand this is interpreted as the number of indices.
     uint count; 
@@ -66,23 +66,6 @@ public:
     uint commandCount;
 
     bufferObject(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& command);
-};
-
-class camera{
-public:
-    vec3 position;
-    vec3 target;
-    vec3 up;
-
-    mat4 view;
-    mat4 projection;
-
-    int zoom;
-    int rotation;
-    float radius; // used for rotation;
-
-    camera(uint width, uint height);
-    void rotate(float angleAddition);
 };
 
 class shader{

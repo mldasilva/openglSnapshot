@@ -1,14 +1,17 @@
-#ifndef main_only
-#define main_only
+// #ifndef main_only
+// #define main_only
 
 #include "main.h"
 #include "glmath.h"
 
+#include "camera.h"
+#include "controller.h"
 #include "imGui_wrapper.h"
 #include "model.h"
 #include "gl_shaders.h"
 
-#endif 
+
+// #endif 
 
 int main(void)
 {
@@ -45,6 +48,10 @@ int main(void)
     // ===============================================================
     imGui_wrapper _imguiWrapper(window);
     camera camera(width, height);
+
+
+
+    controller controller(window, &camera);
     shader shader("../res/shaders/default.vs", "../res/shaders/default.fs");
     renderPool rp;
 
