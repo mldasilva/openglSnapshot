@@ -18,6 +18,8 @@ public:
     float radius; // used for rotation;
 
     camera(uint width, uint height);
+    ~camera();
+    
     void rotate(float angleAddition);
     void move(vec3 translate);
     void moveTo(vec3 vec);

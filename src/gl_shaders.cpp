@@ -7,6 +7,7 @@
 // =======================================================================================
 bufferObject::bufferObject(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& command)
 {
+    cout << "creating buffer object..." << endl;
     glGenVertexArrays(1, &VAO); 
     glBindVertexArray(VAO); 
     
@@ -57,6 +58,19 @@ bufferObject::bufferObject(vector<vertex>& vertices, uint vertexOffset, vector<u
 
 }
 
+bufferObject::~bufferObject()
+{
+    cout << "deleting buffer object" << endl;
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    glDeleteBuffers(1, &indirectBuffer); 
+    glDeleteBuffers(1, &EBO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteVertexArrays(1, &VAO);
+}
+
 // =======================================================================================
 //
 // Shader
@@ -65,8 +79,9 @@ bufferObject::bufferObject(vector<vertex>& vertices, uint vertexOffset, vector<u
 
 shader::shader(const char* vertexPath, const char* fragmentPath)
 {
-    ssbo.resize(1);
-    ssbo_map.resize(1);
+    cout << "creating shader object..." << endl;
+
+    ssboIndex = 0; // keeping track of ssbo vector pushs
 
     // 1. retrieve the vertex/fragment source code from filePath
     string vertexCode;
@@ -131,9 +146,28 @@ shader::shader(const char* vertexPath, const char* fragmentPath)
     glLinkProgram(id);
     checkCompileErrors(id, "PROGRAM");
 
+    // two gl uniforms that will be const in camera shaders
+    set_uniform_location("u_view");
+    set_uniform_location("u_projection");
+
     // delete the shaders as they're linked into our program now and no longer necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
+}
+
+shader::~shader()
+{
+    cout << "deleting shader object" << endl;
+
+        // vector<uint> ssbo;
+    // vector<void*> ssbo_map;
+    for(uint s : ssbo)
+    {
+        cout << "deleting ssbo "<< s << endl;
+        glDeleteBuffers(1, &s);
+    }
+
+    // ssbo_map not required? doesnt use a glGenFunction
 }
 
 void checkCompileErrors(unsigned int shader, std::string type)
@@ -160,33 +194,44 @@ void checkCompileErrors(unsigned int shader, std::string type)
     }
 }
 
-void shader::draw(camera camera, bufferObject buffer)
+void shader::draw(camera& camera, bufferObject& buffer)
 {
     // Use the shader program
     glUseProgram(id);
 
+    // move into get_uniform_location
     // Get the location of the 'modelMatrix' uniform in the shader
-    GLint viewmatrix = glGetUniformLocation(id, "u_view");
-    GLint projectionmatrix = glGetUniformLocation(id, "u_projection");
+    // GLint viewmatrix = glGetUniformLocation(id, "u_view");
+    // GLint projectionmatrix = glGetUniformLocation(id, "u_projection");
+
+    // texture slot example
+    // glUniform1i(glGetUniformLocation(id, "u_textureSampler"), 3);
 
     // Pass the glm::mat4 to the shader
-    glUniformMatrix4fv(viewmatrix, 1, GL_FALSE, glm::value_ptr(camera.view));
-    glUniformMatrix4fv(projectionmatrix, 1, GL_FALSE, glm::value_ptr(camera.projection));
+    glUniformMatrix4fv(get_uniform_location("u_view"), 1, GL_FALSE, glm::value_ptr(camera.view));
+    glUniformMatrix4fv(get_uniform_location("u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projection));
     
     glBindVertexArray(buffer.VAO);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer.indirectBuffer);
     glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, buffer.commandCount, sizeof(DrawElementsIndirectCommand));
+
 }
 
 //CREATE_SHADER_BUFFER_STORAGE
-void shader::create_ssbo(uint index, uint size, const void * data)
+void shader::create_ssbo(uint binding, uint size, const void * data)
 {
-    glGenBuffers(1, &ssbo[index]); // by address
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo[index]);
+    cout << "creating ssbo..." << endl;
+    ssbo.push_back(0);
+    ssbo_map.push_back(0);
+
+    glGenBuffers(1, &ssbo[ssboIndex]); // by address
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo[ssboIndex]);
     glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, data, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, index, ssbo[index]); // by value
-    ssbo_map[index] = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, ssbo[ssboIndex]); // by value
+    ssbo_map[ssboIndex] = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    ssboIndex++;
 }
 
 void shader::triangle_debug()
@@ -199,12 +244,39 @@ void shader::triangle_debug()
     glEnd();
 }
 
+void shader::set_uniform_location(const char *name)
+{
+    int location = glGetUniformLocation(id, name);
+    uniformLocationMap[name] = location;
+}
+
+int shader::get_uniform_location(const char *name)
+{
+    if(uniformLocationMap.find(name) != uniformLocationMap.end())
+    {
+        return uniformLocationMap[name];
+    }
+    else
+    {
+        cout << "uniform location not set" << endl;
+        return -1;
+    }
+}
+
 // =======================================================================================
 //
 // Render Pool
 //
 // =======================================================================================
+renderPool::renderPool()
+{
+    cout << "creating renderPool object..." << endl;
+}
 
+renderPool::~renderPool()
+{
+    cout << "deleting renderPool object..." << endl;
+}
 
 void renderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
 {
@@ -225,4 +297,127 @@ void renderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
     count++;
 
     matrices.push_back(translate(mat4(1.0f), position));
+}
+
+// =======================================================================================
+//
+// Texture
+//
+// =======================================================================================
+
+texture::texture()
+{
+    cout << "creating texture object..." << endl;
+    textureAddrIndex = 0;
+    bindless_index = 0;
+}
+
+texture::~texture()
+{
+    for(const uint& id : textureAddress) 
+    {
+        cout << "deleting texture " << id << endl;
+        glDeleteTextures(1, &id);
+    }
+
+    cout << "deleting texture object..." << endl;
+}
+
+/// @brief loads texture into a opengl texture slot, default 0
+/// @param _textureAddr_ Specifies an address (array) in which the generated texture names are stored.
+/// @param _textureSlot_ Specifies which texture unit to make active. The number of texture units is implementation dependent, but must be at least 80
+/// @param _filepath____ stbi_load filepath of the texture
+void texture::loadTexture(const char * filepath, uint textureSlot)
+{
+    textureAddress.push_back(0);
+    cout << "loaded texture into address: " << textureAddrIndex << endl;
+    //load and create a texture 
+    //-------------------------
+    glGenTextures(1, &textureAddress[textureAddrIndex]);
+    // The initial value is GL_TEXTURE0.
+    glActiveTexture(GL_TEXTURE0 + textureSlot); // controlling texture slot to bind into
+    glBindTexture(GL_TEXTURE_2D, textureAddress[textureAddrIndex]); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+
+    // settings
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // or GL_Linear vs GL_NEAREST
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // or GL_Linear vs GL_NEAREST
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // or GL_CLAMP_TO_EDGE
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // or GL_CLAMP_TO_EDGE
+    
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    // stbi_set_flip_vertically_on_load(1);
+    unsigned char *data = stbi_load(filepath, &width, &height, &nrChannels, 0);
+    
+    if (data)
+    {
+        //GL_RGBA8 and GL_RGBA are for pngs
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        //glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        printf("Failed to load image");
+    }
+
+    stbi_image_free(data);
+
+    textureAddrIndex++;
+}
+
+/// @brief overload/ override for vram bindless textures
+/// @param textures 
+/// @param textureHandle 
+/// @param filepath 
+void texture::loadTexture(const char * filepath)
+{
+    //load and create a texture 
+    //-------------------------
+    textureAddress.push_back(0);
+    bindless_texture_handles.push_back(0);
+
+    glGenTextures(1, &textureAddress[textureAddrIndex]);
+    glBindTexture(GL_TEXTURE_2D, textureAddress[textureAddrIndex]); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
+
+    // settings
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); // or GL_Linear vs GL_NEAREST
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // or GL_Linear vs GL_NEAREST
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); // or GL_CLAMP_TO_EDGE
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // or GL_CLAMP_TO_EDGE
+    
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    // stbi_set_flip_vertically_on_load(1); // i think gltf importer is flipping uvs
+    unsigned char *data = stbi_load(filepath, &width, &height, &nrChannels, 0);
+    
+    if (data)
+    {
+        //GL_RGBA8 and GL_RGBA are for pngs
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        //glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        printf("Failed to load image");
+    }
+
+    stbi_image_free(data);
+
+    bindless_texture_handles[bindless_index] = glGetTextureHandleARB(textureAddress[textureAddrIndex]);
+    glMakeTextureHandleResidentARB(bindless_texture_handles[bindless_index]);
+
+    textureAddrIndex++;
+    bindless_index++;
+}
+
+GLuint64 *texture::handles()
+{
+    return bindless_texture_handles.data();
+}
+
+uint texture::handleByteSize()
+{
+    return bindless_texture_handles.size() * sizeof(GLuint64);
 }

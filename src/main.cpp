@@ -82,13 +82,35 @@ int main(void)
 
     model cube("../res/models/cube.gltf");
     model cone("../res/models/cube.gltf");
-    
+
     rp.insert(cone.vertices, cone.indices, vec3(0, 0, 0));
     rp.insert(cube.vertices, cube.indices, vec3(1, 0, -12));
     rp.insert(cube.vertices, cube.indices, vec3(8, 0, 4));
 
     shader.create_ssbo(0, rp.matrices.size() * sizeof(mat4), rp.matrices.data());
     bufferObject bo(rp.vertices, 8, rp.indices, rp.commands);
+
+    // ===============================================================
+    // textures
+    // ===============================================================
+    
+    texture textures;
+    textures.loadTexture("../res/textures/dice.png", 1);
+    textures.loadTexture("../res/textures/greentop.png", 2);
+    textures.loadTexture("../res/textures/greentop.png");
+    textures.loadTexture("../res/textures/dice.png");
+
+    shader.create_ssbo(2, textures.handleByteSize(), textures.handles());
+
+    // ===============================================================
+    // blending settings
+    // ===============================================================
+    
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -101,13 +123,14 @@ int main(void)
         controller.mouse_controls(window, deltaTime, !imGuiHovered);
 
         /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClearColor(0.0f, 0.2f, 0.3f, 0.1f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         shader.draw(camera, bo);
     
-        _imguiWrapper.start_frame();
-        _imguiWrapper.demo(&imGuiHovered);
-        _imguiWrapper.rendering();
+        // _imguiWrapper.start_frame();
+        // _imguiWrapper.demo(&imGuiHovered);
+        // _imguiWrapper.rendering();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
@@ -115,9 +138,16 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
+    cout << endl;
+    GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL Error: " << error << std::endl;
+    }
 
     glfwDestroyWindow(window);
     glfwTerminate();
+
+
 
     return 0;
 }

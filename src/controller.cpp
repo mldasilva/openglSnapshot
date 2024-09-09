@@ -53,34 +53,6 @@ void controller::window_position_callback(GLFWwindow* window, int xpos, int ypos
     std::cout << "Window moved to position: (" << xpos << ", " << ypos << ")" << std::endl;
 }
 
-// Function to calculate intersection of a ray with a plane
-glm::vec3 intersectRayWithPlane(
-    const glm::vec3& rayOrigin,
-    const glm::vec3& rayDirection,
-    const glm::vec3& planePoint,
-    const glm::vec3& planeNormal)
-{
-    // Calculate the dot product of the ray direction and the plane normal
-    float denom = glm::dot(planeNormal, rayDirection);
-    
-    // If the denominator is close to zero, the ray is parallel to the plane
-    if (glm::abs(denom) > 1e-6f)
-    {
-        // Calculate the distance from the ray origin to the plane
-        float t = glm::dot(planeNormal, planePoint - rayOrigin) / denom;
-        
-        // If t is negative, the intersection point is behind the ray origin
-        if (t >= 0)
-        {
-            // Calculate the intersection point
-            return rayOrigin + t * rayDirection;
-        }
-    }
-    
-    // Return an invalid value to indicate no intersection
-    return glm::vec3(std::numeric_limits<float>::infinity());
-}
-
 void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active)
 {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && active) 
@@ -137,12 +109,13 @@ void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && active) 
     {
-        _camera->rotate(0.5f);
+        _camera->rotate(2.0f);
     }
 }
 
 controller::controller(GLFWwindow *window, camera *camera)
 {
+    cout << "creating controller object..." << endl;
     // glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
     _camera = camera;
 
@@ -165,3 +138,7 @@ controller::controller(GLFWwindow *window, camera *camera)
     glfwSetWindowPosCallback(window, window_position_callback);
 }
 
+controller::~controller()
+{
+    cout << "deleting controller object..." << endl;
+}

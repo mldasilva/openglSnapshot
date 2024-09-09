@@ -26,7 +26,7 @@ imgui = imgui.o imgui_draw.o imgui_widgets.o imgui_tables.o imgui_impl_glfw.o im
 run: output
 	rm main.o && clear && echo $(OS) && ../bin/$(NAME)
 
-output: main.o model.o gl_shaders.o camera.o controller.o $(imgui) imGui_wrapper.o 
+output: main.o model.o gl_shaders.o camera.o controller.o stb_image.o $(imgui) imGui_wrapper.o 
 	g++ $^ -o ../bin/$(NAME) $(LIBRARIES) $(LINK_FLAGS) -g
 
 main.o: main.cpp
@@ -44,8 +44,8 @@ camera.o: camera.cpp
 controller.o : controller.cpp
 	g++ -c $< $(GLFW_INCLUDES) $(GLM_INCLUDES) -o $@
 
-
-
+stb_image.o : ../lib/stb/stb_image.cpp
+	g++ -c $< -o $@
 
 # imgui
 imGui_wrapper.o: imGui_wrapper.cpp

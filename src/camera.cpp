@@ -2,6 +2,7 @@
 
 camera::camera(uint width, uint height)
 {
+    cout << "creating camera object" << endl;
     zoom = 50.0f;
 
     float halfWidth = (width / 2.0f) / zoom;
@@ -16,6 +17,11 @@ camera::camera(uint width, uint height)
 
     up = glm::vec3(0.0f, 1.0f, 0.0f);           // Up vector
     view = glm::lookAt(position, target, up);
+}
+
+camera::~camera()
+{
+    cout << "deleting camera object" << endl;
 }
 
 void camera::rotate(float angleAddition)
@@ -47,5 +53,5 @@ void camera::move(vec3 translate)
 void camera::moveTo(vec3 target)
 {
     // target = 
-    view = glm::lookAt(position, target, up);
+    // view = glm::lookAt(position, target, up);
 }

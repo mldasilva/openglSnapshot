@@ -16,6 +16,8 @@ private:
     void static window_position_callback(GLFWwindow* window, int xpos, int ypos);
 public:
     controller(GLFWwindow *window, camera *camera);
+    ~controller();
+    
     void mouse_controls(GLFWwindow *pWindow, float deltaTime, bool active);
 };
 
