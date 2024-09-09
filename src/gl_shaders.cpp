@@ -79,9 +79,13 @@ shader::shader(const char* vertexPath, const char* fragmentPath)
     fShaderFile.exceptions (ifstream::failbit | ifstream::badbit);
     try 
     {
+        std::string vp, fp;
+        vp = shaders + vertexPath;
+        fp = shaders + fragmentPath;
+
         // open files
-        vShaderFile.open(vertexPath);
-        fShaderFile.open(fragmentPath);
+        vShaderFile.open(vp);
+        fShaderFile.open(fp);
 
         stringstream vShaderStream, fShaderStream;
 

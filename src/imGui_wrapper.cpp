@@ -43,12 +43,16 @@ void imGui_wrapper::start_frame()
     ImGui::NewFrame();
 }
 
-void imGui_wrapper::demo()
+void imGui_wrapper::demo(bool* active)
 {
+    ImGuiIO& io = ImGui::GetIO();
+    // std::cout << "Mouse Pos: " << io.MousePos.x << ", " << io.MousePos.y << std::endl;
     if (show_demo_window)
     {
         ImGui::ShowDemoWindow(&show_demo_window);
     }  
+    // ImGui::IsAnyItemHovered() || ImGui::IsAnyItemActive() || ImGui::IsWindowFocused() ||
+    *active = (io.WantCaptureMouse);
 }
 
 void imGui_wrapper::rendering()

@@ -1,7 +1,6 @@
 #ifndef camera_h
 #define camera_h
 
-
 #include "glmath.h"
 
 class camera{
@@ -12,6 +11,7 @@ public:
 
     mat4 view;
     mat4 projection;
+    mat4 rotationMatrix;
 
     int zoom;
     int rotation;
@@ -19,6 +19,8 @@ public:
 
     camera(uint width, uint height);
     void rotate(float angleAddition);
+    void move(vec3 translate);
+    void moveTo(vec3 vec);
 };
 
 #endif

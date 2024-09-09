@@ -10,8 +10,31 @@
 #include "model.h"
 #include "gl_shaders.h"
 
-
 // #endif 
+
+//big things:
+// ---------------
+// lights
+// shadows
+// wfc - wave function collapse
+// particle engine
+// physics engine
+// sprite / billboard
+// animation
+
+//smaller things:
+//------------------
+// skills, abilities
+// quest
+// ai
+// combat
+
+// huge things:
+//------------------
+// networking
+
+// know issue:
+// dragging window freezes game and messes up deltatime
 
 int main(void)
 {
@@ -33,6 +56,11 @@ int main(void)
     float width = 1280;
     float height = 720;
     
+    float deltaTime = 0.0f;
+    double currentTime, lastTick;
+
+    bool imGuiHovered = false;
+
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
@@ -46,22 +74,18 @@ int main(void)
     // ===============================================================
     // main
     // ===============================================================
-    imGui_wrapper _imguiWrapper(window);
-    camera camera(width, height);
-
-
-
-    controller controller(window, &camera);
-    shader shader("../res/shaders/default.vs", "../res/shaders/default.fs");
+    camera          camera(width, height);
+    controller      controller(window, &camera);    // after camera
+    imGui_wrapper   _imguiWrapper(window);          // after controller
+    shader          shader("default.vs", "default.fs");
     renderPool rp;
 
-    model cube("../res/models/cone.gltf");
+    model cube("../res/models/cube.gltf");
     model cone("../res/models/cube.gltf");
     
-    
-    rp.insert(cone.vertices, cone.indices, vec3(3,0,3));
-    rp.insert(cube.vertices, cube.indices, vec3(1,0,-5));
-    
+    rp.insert(cone.vertices, cone.indices, vec3(0, 0, 0));
+    rp.insert(cube.vertices, cube.indices, vec3(1, 0, -12));
+    rp.insert(cube.vertices, cube.indices, vec3(8, 0, 4));
 
     shader.create_ssbo(0, rp.matrices.size() * sizeof(mat4), rp.matrices.data());
     bufferObject bo(rp.vertices, 8, rp.indices, rp.commands);
@@ -69,14 +93,20 @@ int main(void)
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
+        lastTick = currentTime;
+        currentTime = glfwGetTime();
+        deltaTime = currentTime - lastTick;
+
+        /* controls here */ 
+        controller.mouse_controls(window, deltaTime, !imGuiHovered);
+
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
         
         shader.draw(camera, bo);
-        // camera.rotate(0.5f);
     
         _imguiWrapper.start_frame();
-        _imguiWrapper.demo();
+        _imguiWrapper.demo(&imGuiHovered);
         _imguiWrapper.rendering();
 
         /* Swap front and back buffers */
@@ -85,7 +115,6 @@ int main(void)
         /* Poll for and process events */
         glfwPollEvents();
     }
-
 
     glfwDestroyWindow(window);
     glfwTerminate();

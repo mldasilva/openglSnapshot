@@ -4,7 +4,15 @@ void controller::cursor_position_callback(GLFWwindow* window, double xpos, doubl
 {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) 
     {
-
+        
+        // Retrieve the application instance from the window's user pointer
+        // camera* ptr = static_cast<camera*>(glfwGetWindowUserPointer(window));
+        // if (ptr) {
+        //     // Call the appropriate member function
+        //     cout << ptr->position << endl;
+        //     ptr->move(vec3(0.1f,0,0.1f));
+        // }
+        
     }    
 }
 
@@ -17,12 +25,7 @@ void controller::mouse_button_callback(GLFWwindow* window, int button, int actio
 
     if (button == GLFW_MOUSE_BUTTON_LEFT)
     {
-        // Retrieve the application instance from the window's user pointer
-        camera* app = static_cast<camera*>(glfwGetWindowUserPointer(window));
-        if (app) {
-            // Call the appropriate member function
-            cout << app->position << endl;
-        }
+        
     }
 }
 
@@ -46,18 +49,102 @@ void controller::framebuffer_size_callback(GLFWwindow* window, int width, int he
     glViewport(0, 0, width, height);
 }
 
-void controller::mouse_controls(GLFWwindow *pWindow, float deltaTime, bool active)
+void controller::window_position_callback(GLFWwindow* window, int xpos, int ypos) {
+    std::cout << "Window moved to position: (" << xpos << ", " << ypos << ")" << std::endl;
+}
+
+// Function to calculate intersection of a ray with a plane
+glm::vec3 intersectRayWithPlane(
+    const glm::vec3& rayOrigin,
+    const glm::vec3& rayDirection,
+    const glm::vec3& planePoint,
+    const glm::vec3& planeNormal)
 {
-    if (glfwGetMouseButton(pWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && active) 
+    // Calculate the dot product of the ray direction and the plane normal
+    float denom = glm::dot(planeNormal, rayDirection);
+    
+    // If the denominator is close to zero, the ray is parallel to the plane
+    if (glm::abs(denom) > 1e-6f)
     {
+        // Calculate the distance from the ray origin to the plane
+        float t = glm::dot(planeNormal, planePoint - rayOrigin) / denom;
+        
+        // If t is negative, the intersection point is behind the ray origin
+        if (t >= 0)
+        {
+            // Calculate the intersection point
+            return rayOrigin + t * rayDirection;
+        }
+    }
+    
+    // Return an invalid value to indicate no intersection
+    return glm::vec3(std::numeric_limits<float>::infinity());
+}
+
+void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active)
+{
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && active) 
+    {
+        // get mouse world ray (origin and direction)
         double mouseX, mouseY;
-        glfwGetCursorPos(pWindow, &mouseX, &mouseY);
+        int width, height;
+        glfwGetCursorPos(window, &mouseX, &mouseY);
+        glfwGetWindowSize(window, &width, &height);
+
+        // Convert mouse position to NDC
+        float ndcX = (2.0f * mouseX) / width - 1.0f;
+        float ndcY = 1.0f - (2.0f * mouseY) / height; // Invert Y-axis
+
+        // Create NDC positions for near and far points (Z = -1 for near, 1 for far)
+        glm::vec4 rayClipNear(ndcX, ndcY, -1.0f, 1.0f);
+        glm::vec4 rayClipFar(ndcX, ndcY, 1.0f, 1.0f);
+
+        // Convert from clip space to view space
+        glm::mat4 inverseProjection = glm::inverse(_camera->projection);
+        glm::vec4 rayViewNear = inverseProjection * rayClipNear;
+        glm::vec4 rayViewFar = inverseProjection * rayClipFar;
+        rayViewNear /= rayViewNear.w; // Perspective divide
+        rayViewFar /= rayViewFar.w;
+
+        // Convert from view space to world space
+        glm::mat4 inverseView = glm::inverse(_camera->view);
+        glm::vec4 rayWorldNear = inverseView * rayViewNear;
+        glm::vec4 rayWorldFar = inverseView * rayViewFar;
+
+        // Ray origin is the near point, direction is the vector from near to far
+        vec3 rayOrigin = glm::vec3(rayWorldNear);
+        vec3 rayDirection = glm::normalize(glm::vec3(rayWorldFar - rayWorldNear));
+
+        /* plane intersection */
+
+        // Plane equation: y = 0
+        float t = -rayOrigin.y / rayDirection.y;
+
+        // If t < 0, the intersection is behind the ray origin, so ignore it
+        if (t < 0.0f) {
+            // cout << "false" << endl;
+        }
+
+        // Calculate the intersection point
+        vec3 intersectionPoint = rayOrigin + t * rayDirection;
+
+        vec3 d = normalize(intersectionPoint - _camera->target);
+        
+        float speed = 6.0f;
+        _camera->move(vec3(d.x * deltaTime * speed, 0 , d.z * deltaTime * speed));
+        
+    }
+
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && active) 
+    {
+        _camera->rotate(0.5f);
     }
 }
 
 controller::controller(GLFWwindow *window, camera *camera)
 {
     // glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+    _camera = camera;
 
     // Set the user pointer to the camera instance
     glfwSetWindowUserPointer(window, camera);
@@ -73,5 +160,8 @@ controller::controller(GLFWwindow *window, camera *camera)
 
     //viewport
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+
+    // Set the window position callback
+    glfwSetWindowPosCallback(window, window_position_callback);
 }
 

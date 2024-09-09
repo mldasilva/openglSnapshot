@@ -26,7 +26,7 @@ public:
 
     // Member function prototypes
     void start_frame();
-    void demo();
+    void demo(bool* active);
     void rendering();
 };
 

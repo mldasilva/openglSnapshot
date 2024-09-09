@@ -8,10 +8,10 @@ camera::camera(uint width, uint height)
     float halfHeight = (height / 2.0f) / zoom;
 
     // Orthographic projection setup
-    projection = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, 0.0f, 100.0f);
+    projection = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, -1.0f, 100.0f);
 
     // View matrix setup (camera looking at the scene)
-    position = glm::vec3(5.0f, 5.0f, 5.0f);   // Camera position
+    position = glm::vec3(-15.0f, 15.0f, 15.0f);   // Camera position
     target = glm::vec3(0.0f, 0.0f, 0.0f); // Look at the origin
 
     up = glm::vec3(0.0f, 1.0f, 0.0f);           // Up vector
@@ -34,5 +34,18 @@ void camera::rotate(float angleAddition)
     position = target + rotatedDirection;
 
     // Step 4: Create the view matrix using the new camera position
+    view = glm::lookAt(position, target, up);
+}
+
+void camera::move(vec3 translate)
+{
+    target += translate;
+    position += translate;
+    view = glm::lookAt(position + translate, target + translate, up);
+}
+
+void camera::moveTo(vec3 target)
+{
+    // target = 
     view = glm::lookAt(position, target, up);
 }

@@ -9,9 +9,12 @@
 #include <iostream>
 
 #include <vector>
+#include <string.h>
 
 #include "glmath.h"
 #include "camera.h"
+
+const string shaders = "../res/shaders/";
 
 // https://ktstephano.github.io/rendering/opengl/mdi
 // Struct for MultiDrawElements
