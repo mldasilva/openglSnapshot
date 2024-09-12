@@ -1,8 +1,9 @@
 #ifndef main_h
 #define main_h
 
-#include <GL/glew.h>        // must be before glfw
-#include <GLFW/glfw3.h>
+#define GLEW_STATIC
+#include <glew.h>        // must be before glfw
+#include <glfw3.h>
 
 #include <iostream>
 #include <vector>

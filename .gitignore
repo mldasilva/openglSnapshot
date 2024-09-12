@@ -2,3 +2,5 @@
 /src/*.ini
 /bin/*
 /res/models/*
+/build
+*.ini

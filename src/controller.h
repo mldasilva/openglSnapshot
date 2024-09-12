@@ -1,9 +1,7 @@
 #ifndef controller_h
 #define controller_h
 
-#include <GLFW/glfw3.h>
-#include <iostream>
-
+#include <glfw3.h>
 #include "camera.h"
 
 class controller{

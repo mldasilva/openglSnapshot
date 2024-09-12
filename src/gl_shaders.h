@@ -1,7 +1,8 @@
 #ifndef gl_shaders_h
 #define gl_shaders_h
 
-#include <GL/glew.h>
+#define GLEW_STATIC
+#include <glew.h>
 
 #include <string>
 #include <fstream>
@@ -15,9 +16,7 @@
 #include "glmath.h"
 #include "camera.h"
 
-#include "../lib/stb/stb_image.h"
-
-const string shaders = "../res/shaders/";
+#include <stb_image.h>
 
 // https://ktstephano.github.io/rendering/opengl/mdi
 // Struct for MultiDrawElements

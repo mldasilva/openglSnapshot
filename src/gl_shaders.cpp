@@ -95,8 +95,8 @@ shader::shader(const char* vertexPath, const char* fragmentPath)
     try 
     {
         std::string vp, fp;
-        vp = shaders + vertexPath;
-        fp = shaders + fragmentPath;
+        vp = vertexPath;
+        fp = fragmentPath;
 
         // open files
         vShaderFile.open(vp);
