@@ -2,8 +2,6 @@
 #define camera_h
 
 #include "glmath.h"
-// #include <glm.hpp> //v 1.0.1
-// #include <ext.hpp>
 
 class camera{
 public:

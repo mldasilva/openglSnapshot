@@ -10,7 +10,19 @@
 #include "model.h"
 #include "gl_shaders.h"
 
-// #include <PxPhysicsAPI.h>
+#include <Jolt.h>
+
+// Jolt includes
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/Factory.h>
+#include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Core/JobSystemThreadPool.h>
+#include <Jolt/Physics/PhysicsSettings.h>
+#include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyActivationListener.h>
 
 // using namespace physx;
 // #endif 
@@ -41,7 +53,6 @@
 
 int main(void)
 {
-    std::cout << "hello world111"<< std::endl;
     GLFWwindow* window;
     /* Initialize the library */
     if (!glfwInit())
@@ -117,53 +128,6 @@ int main(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    // // physics
-    // // Initialize PhysX foundation and physics SDK
-    // // static PxDefaultAllocator gAllocator;
-    // // static PxDefaultErrorCallback gErrorCallback;
-    // // PxFoundation* foundation = PxCreateFoundation(PX_PHYSICS_VERSION, gAllocator, gErrorCallback);
-    // // PxPhysics* physics = PxCreatePhysics(PX_PHYSICS_VERSION, *foundation, PxTolerancesScale());
-
-    // // // Create a default dispatcher, required for simulation
-    // // PxDefaultCpuDispatcher* dispatcher = PxDefaultCpuDispatcherCreate(2);
-
-    // // // Create the scene description
-    // // PxSceneDesc sceneDesc(physics->getTolerancesScale());
-    // // sceneDesc.gravity = PxVec3(0.0f, -9.81f, 0.0f);  // Set gravity
-    // // sceneDesc.cpuDispatcher = dispatcher;
-    // // sceneDesc.filterShader = PxDefaultSimulationFilterShader;
-
-    // // // Create the scene
-    // // PxScene* scene = physics->createScene(sceneDesc);
-
-    // // // Create a default material (friction, restitution, etc.)
-    // // PxMaterial* material = physics->createMaterial(0.5f, 0.5f, 0.6f);
-
-    // // // Create a static ground plane
-    // // PxRigidStatic* groundPlane = PxCreatePlane(*physics, PxPlane(0, 1, 0, 0), *material);
-    // // scene->addActor(*groundPlane);
-
-    // // // Create a dynamic box (cube)
-    // // PxReal boxSize = 1.0f;
-    // // PxBoxGeometry geometry(boxSize, boxSize, boxSize);
-    // // PxTransform transform(PxVec3(0.0f, 10.0f, 0.0f));  // Place the cube 10 units above the ground
-    // // PxRigidDynamic* box = PxCreateDynamic(*physics, transform, geometry, *material, 10.0f);
-    // // box->setAngularDamping(0.5f);  // Damping to prevent excessive rotation
-    // // scene->addActor(*box);
-
-    // // // Simulate the scene
-    // // const PxReal timeStep = 1.0f / 60.0f;  // Simulate at 60 FPS
-    // // for (int i = 0; i < 300; ++i) {
-    // //     scene->simulate(timeStep);  // Step the simulation
-    // //     scene->fetchResults(true);  // Wait for the simulation results
-
-    // //     // Get the current position of the box
-    // //     PxTransform boxTransform = box->getGlobalPose();
-    // //     PxVec3 pos = boxTransform.p;
-    // //     printf("Box position: x = %f, y = %f, z = %f\n", pos.x, pos.y, pos.z);
-    // // }
-
-
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -196,14 +160,6 @@ int main(void)
     // if (error != GL_NO_ERROR) {
     //     std::cerr << "OpenGL Error: " << error << std::endl;
     // }
-
-    // // Clean up
-    // // box->release();
-    // // groundPlane->release();
-    // // scene->release();
-    // // dispatcher->release();
-    // // physics->release();
-    // // foundation->release();
 
     glfwDestroyWindow(window);
     glfwTerminate();
