@@ -4,14 +4,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-include(${CMAKE_SOURCE_DIR}/lib/jolt/Jolt/jolt.cmake)
+# include(${CMAKE_SOURCE_DIR}/lib/jolt/Jolt/jolt.cmake)
 
 project(isometric_plus VERSION 0.1.0 LANGUAGES C CXX)
 
 # Add executable
 add_executable(isometric_plus main.cpp)
 
-# Suppress LNK4099 warning glew or glfw debug information 
+# Suppress LNK4099 warning glfw debug information 
 # because cmake running in Debug but pdb not provided
 target_link_options(isometric_plus PRIVATE /IGNORE:4099)
 
@@ -28,7 +28,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_SOURCE_DIR}/lib/glm
     ${CMAKE_SOURCE_DIR}/lib/imgui
     ${CMAKE_SOURCE_DIR}/lib/imgui/backends
-    ${CMAKE_SOURCE_DIR}/lib/jolt/Jolt
     ${CMAKE_SOURCE_DIR}/lib/json
     ${CMAKE_SOURCE_DIR}/lib/stb
     ${CMAKE_SOURCE_DIR}/src
@@ -59,8 +58,24 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     gl_shaders
     model
     Jolt
+    jolt_wrapper
 )
 
+# Define the resource path at configure time
+set(SHADER_DIR "${CMAKE_BINARY_DIR}/res/shaders")
+
+add_compile_definitions(SHADER_DIR="${SHADER_DIR}")
+
+set(MODELS_DIR "${CMAKE_BINARY_DIR}/res/models")
+
+add_compile_definitions(MODELS_DIR="${MODELS_DIR}")
+
+set(TEXTURES_DIR "${CMAKE_BINARY_DIR}/res/textures")
+
+add_compile_definitions(TEXTURES_DIR="${TEXTURES_DIR}")
+
+# Copy shaders to build directory
+file(COPY ${CMAKE_SOURCE_DIR}/res/ DESTINATION ${CMAKE_BINARY_DIR}/res/)
 
 # cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 

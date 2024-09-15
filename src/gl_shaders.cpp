@@ -77,6 +77,27 @@ bufferObject::~bufferObject()
 //
 // =======================================================================================
 
+std::string LoadFileToString(const std::string& filePath) {
+    // Open the file in binary mode (optional, but ensures no newline translation)
+    std::ifstream file(filePath, std::ios::in | std::ios::binary);
+    
+    // Check if the file is open and ready to read
+    if (!file.is_open()) {
+        std::cerr << "Could not open file: " << filePath << std::endl;
+        return "";
+    }
+
+    // Create a string stream and read the file into it
+    std::stringstream buffer;
+    buffer << file.rdbuf(); // Read the entire file buffer into the stringstream
+    
+    // Close the file
+    file.close();
+
+    // Return the contents as a string
+    return buffer.str();
+}
+
 shader::shader(const char* vertexPath, const char* fragmentPath)
 {
     cout << "creating shader object..." << endl;
@@ -86,40 +107,43 @@ shader::shader(const char* vertexPath, const char* fragmentPath)
     // 1. retrieve the vertex/fragment source code from filePath
     string vertexCode;
     string fragmentCode;
-    ifstream vShaderFile;
-    ifstream fShaderFile;
-    
+
+    // ifstream vShaderFile;
+    // ifstream fShaderFile;
+
+    vertexCode      = LoadFileToString(vertexPath);
+    fragmentCode    = LoadFileToString(fragmentPath);
     // ensure ifstream objects can throw exceptions:
-    vShaderFile.exceptions (ifstream::failbit | ifstream::badbit);
-    fShaderFile.exceptions (ifstream::failbit | ifstream::badbit);
-    try 
-    {
-        std::string vp, fp;
-        vp = vertexPath;
-        fp = fragmentPath;
+    // vShaderFile.exceptions (ifstream::failbit | ifstream::badbit);
+    // fShaderFile.exceptions (ifstream::failbit | ifstream::badbit);
+    // try 
+    // {
+    //     std::string vp, fp;
+    //     vp = vertexPath;
+    //     fp = fragmentPath;
 
-        // open files
-        vShaderFile.open(vp);
-        fShaderFile.open(fp);
+    //     // open files
+    //     vShaderFile.open(vp);
+    //     fShaderFile.open(fp);
 
-        stringstream vShaderStream, fShaderStream;
+    //     stringstream vShaderStream, fShaderStream;
 
-        // read file's buffer contents into streams
-        vShaderStream << vShaderFile.rdbuf();
-        fShaderStream << fShaderFile.rdbuf();
+    //     // read file's buffer contents into streams
+    //     vShaderStream << vShaderFile.rdbuf();
+    //     fShaderStream << fShaderFile.rdbuf();
 
-        // close file handlers
-        vShaderFile.close();
-        fShaderFile.close();
+    //     // close file handlers
+    //     vShaderFile.close();
+    //     fShaderFile.close();
 
-        // convert stream into string
-        vertexCode   = vShaderStream.str();
-        fragmentCode = fShaderStream.str();
-    }
-    catch (ifstream::failure& e)
-    {
-        cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << endl;
-    }
+    //     // convert stream into string
+    //     vertexCode   = vShaderStream.str();
+    //     fragmentCode = fShaderStream.str();
+    // }
+    // catch (ifstream::failure& e)
+    // {
+    //     cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << endl;
+    // }
 
     const char* vShaderCode = vertexCode.c_str();
     const char * fShaderCode = fragmentCode.c_str();

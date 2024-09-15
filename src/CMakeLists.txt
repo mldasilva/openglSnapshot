@@ -52,3 +52,15 @@ target_include_directories(model PUBLIC
     ${CMAKE_SOURCE_DIR}/lib/glm
     ${CMAKE_SOURCE_DIR}/lib/json
 )
+
+# ==================================================
+# jolt wrapper
+# ==================================================
+
+include(${CMAKE_SOURCE_DIR}/lib/jolt/Jolt/jolt.cmake)
+
+add_library(jolt_wrapper STATIC jolt_wrapper.cpp)
+
+target_include_directories(jolt_wrapper PUBLIC
+    ${CMAKE_SOURCE_DIR}/lib/jolt/
+)

@@ -11,7 +11,8 @@
             "program": "${workspaceFolder}/Build/Debug/isometric_plus.exe",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${fileDirname}",
+            // "cwd": "${fileDirname}", this was causing program to start in the folder the current csvode file was in
+            "cwd": "${workspaceFolder}",
             "environment": [],
             "console": "integratedTerminal"
         }
