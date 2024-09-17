@@ -16,6 +16,8 @@ joltWrapper::joltWrapper()
 	ps.SetBodyActivationListener(&body_activation_listener);
 
 	ps.SetContactListener(&contact_listener);
+
+	interface = &ps.GetBodyInterface();
 }
 
 joltWrapper::~joltWrapper()
@@ -62,10 +64,18 @@ void joltWrapper::joltUnregister()
 	Factory::sInstance = nullptr;
 }
 
+
 void joltWrapper::update()
 {
 	// Step the world
 	ps.Update(cDeltaTime, cCollisionSteps, temp_allocator_ptr, job_system_ptr);
+	int i = 0;
+	for (const auto& bodyID : bodyIDs)
+    {
+		matrices[i] = interface->GetWorldTransform(bodyID);
+		i++;
+	}
+	
 }
 
 BodyInterface &joltWrapper::get_interface()
@@ -75,7 +85,63 @@ BodyInterface &joltWrapper::get_interface()
     return ps.GetBodyInterface();
 }
 
-Body* joltWrapper::create_shape(const Shape *inShape, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation)
+BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &inModel, RVec3Arg inPosition, QuatArg inRot)
+{
+	cout << " created object" << endl;
+	BodyID result;
+
+	render.insert(inModel.vertices, inModel.indices);
+
+	// Rotation (quaternion)
+    // JPH::Quat rotation = JPH::Quat::sRotation(JPH::Vec3::sAxisY(), JPH::DegreesToRadians(45.0f));  // Rotate 45 degrees around the Y axis
+
+    // Create the transformation matrix
+	matrices.push_back(RMat44::sRotationTranslation(inRot, inPosition));
+
+	if(inType == enviroment_static)
+    {
+        result = create_shape(
+            new BoxShape(Vec3(1.0f, 1.0f, 1.0f)), 
+            inPosition, Quat::sIdentity(),  
+            EMotionType::Static, 
+            Layers::NON_MOVING, 
+            EActivation::DontActivate
+        );
+    }
+    else if(inType == enviroment_dynamic)
+    {
+        result = create_shape(
+            new BoxShape(Vec3(1.0f, 1.0f, 1.0f)), 
+            inPosition, Quat::sIdentity(),  
+            EMotionType::Dynamic, 
+            Layers::MOVING, 
+            EActivation::Activate
+        );
+        // pJolt->get_interface().SetRestitution(joltID, 0.4f);
+    }
+    else if(inType == player)
+    {
+        
+    }
+    else if(inType == npc)
+    {
+        
+    }
+
+	bodyIDs.push_back(result);
+
+	return result;
+}
+
+/// @brief use to create shapes without rendering, collision boxes
+/// @param inShape 
+/// @param inPosition 
+/// @param inRotation 
+/// @param inMotionType 
+/// @param inObjectLayer 
+/// @param inActivation 
+/// @return 
+BodyID joltWrapper::create_shape(const Shape *inShape, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation)
 {
 	// inShape->SetEmbedded();
 	BodyCreationSettings settings(inShape, inPosition, inRotation, inMotionType, inObjectLayer);
@@ -83,13 +149,15 @@ Body* joltWrapper::create_shape(const Shape *inShape, RVec3Arg inPosition, QuatA
 	// return get_interface().CreateAndAddBody(settings, inActivation);
 
 	// Create the body in the physics system
-	Body* body = get_interface().CreateBody(settings);
-
+	// Body* body = get_interface().CreateBody(settings);
+	
 	// Add the body to the physics system and activate it
-	get_interface().AddBody(body->GetID(), inActivation);
+	// get_interface().AddBody(body->GetID(), inActivation);
 
-	bodyIDs.push_back(body->GetID());
-	return body;
+	BodyID b_id = interface->CreateAndAddBody(settings, inActivation);
+
+	// bodyIDs.push_back(b_id); // no more! use ps.GetBodies() bodyIDs is for rendering simulations
+	return b_id;
 }
 
 void joltWrapper::optimize()
@@ -98,4 +166,15 @@ void joltWrapper::optimize()
 	// You should definitely not call this every frame or when e.g. streaming in a new level section as it is an expensive operation.
 	// Instead insert all new objects in batches instead of 1 at a time to keep the broad phase efficient.
 	ps.OptimizeBroadPhase();
+}
+
+// Function to print a single RMat44 matrix
+void console_RMat44(const JPH::RMat44& mat) {
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            std::cout << mat(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }

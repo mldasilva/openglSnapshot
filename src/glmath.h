@@ -4,8 +4,11 @@
 #include <math.h>
 #include <glm.hpp> //v 1.0.1
 #include <ext.hpp>
+// #include <gtc/quaternion.hpp>
 
 #include <iostream>
+#include <vector>
+
 using namespace std;
 using namespace glm;
 
@@ -67,4 +70,15 @@ static glm::vec3 calculateYawPitch(const glm::vec3& position, const glm::vec3& t
     return glm::vec3(glm::degrees(pitch), glm::degrees(yaw), 0.0f); // Pitch, Yaw, Roll (roll usually not needed)
 }
 
+static void console_mat4(const glm::mat4 &matrix)
+{
+    for (int row = 0; row < 4; ++row)
+    {
+        for (int col = 0; col < 4; ++col)
+        {
+            std::cout << matrix[col][row] << " ";  // Access matrix elements column-major
+        }
+        std::cout << std::endl;
+    }
+}
 #endif

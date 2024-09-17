@@ -1,6 +1,10 @@
 // Jolt Physics Library (https://github.com/jrouwe/JoltPhysics)
 // SPDX-FileCopyrightText: 2021 Jorrit Rouwe
 // SPDX-License-Identifier: MIT
+#pragma once
+
+#include "model.h"
+#include "render.h"
 
 // The Jolt headers don't include Jolt.h. Always include Jolt.h before including any other Jolt header.
 // You can use Jolt.h in your precompiled header to speed up compilation.
@@ -207,6 +211,14 @@ public:
 	}
 };
 
+enum objectType
+{
+    player = 0,
+    enviroment_static = 1,
+    enviroment_dynamic = 2,
+    npc = 3
+};
+
 class joltWrapper
 {
 private:
@@ -271,10 +283,17 @@ public:
 	// of your own job scheduler. JobSystemThreadPool is an example implementation.
 	JobSystemThreadPool *job_system_ptr; // changed to ptr for wrapper purpose
 
+	BodyInterface *interface;
+
 	// Now we can create the actual physics system.
 	PhysicsSystem ps;
+	
+	/**************** important! */
+	// vector to keep track of the body ids that require render as well as simulating
+	// use physiscSystem.GetBodies() to get all bodies if needed
+	BodyIDVector bodyIDs; 
 
-	BodyIDVector bodyIDs;
+	vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
 
 	joltWrapper();
 	~joltWrapper();
@@ -283,6 +302,9 @@ public:
 	void joltUnregister();
 	void update();
 	BodyInterface& get_interface();
-	Body* create_shape(const Shape *inShape, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation);
+	BodyID create_object(renderPool& render, objectType inType, model &inModel, RVec3Arg inPosition, QuatArg inRot);
+	BodyID create_shape(const Shape *inShape, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation);
 	void optimize();
 };
+
+void console_RMat44(const JPH::RMat44& mat);

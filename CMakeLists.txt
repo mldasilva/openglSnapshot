@@ -56,6 +56,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     camera
     controller
     gl_shaders
+    render
     model
     Jolt
     jolt_wrapper

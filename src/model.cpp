@@ -240,3 +240,4 @@ void model::cout_indices()
         cout << indices[i] << endl;
     }
 }
+

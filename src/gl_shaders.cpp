@@ -2,77 +2,6 @@
 
 // =======================================================================================
 //
-// Buffer Object
-//
-// =======================================================================================
-bufferObject::bufferObject(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& command)
-{
-    cout << "creating buffer object..." << endl;
-    glGenVertexArrays(1, &VAO); 
-    glBindVertexArray(VAO); 
-    
-    glGenBuffers(1, &VBO); 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO); 
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * vertices.size(), vertices.data(), GL_STATIC_DRAW); 
-    
-    if(vertexOffset == 3)
-    {
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, vertexOffset * sizeof(GLfloat), (GLvoid*)0);
-    }
-    else if(vertexOffset == 8)
-    {
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
-        
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, normal));
-        
-        glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texUV));
-    }
-    else{
-        // printf("bufferObject error\n");
-        cout << "bufferObject error\n" << endl;
-        return;
-    }
-
-    glGenBuffers(1, &EBO); 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); 
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), indices.data(), GL_STATIC_DRAW); 
-    
-
-    if(command.data() != NULL)
-    {
-        glGenBuffers(1, &indirectBuffer); 
-        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer); 
-        glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawElementsIndirectCommand) * command.size(), command.data(), GL_STATIC_DRAW);
-        // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-        commandCount = command.size();
-    }
-    else{
-        // printf("bufferObject command error\n");
-        cout << "bufferObject command error\n" << endl;
-        return;
-    }
-
-}
-
-bufferObject::~bufferObject()
-{
-    cout << "deleting buffer object" << endl;
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
-    glDeleteBuffers(1, &indirectBuffer); 
-    glDeleteBuffers(1, &EBO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &VAO);
-}
-
-// =======================================================================================
-//
 // Shader
 //
 // =======================================================================================
@@ -218,6 +147,12 @@ void checkCompileErrors(unsigned int shader, std::string type)
     }
 }
 
+// void update_position(uint index, shader& shader, renderPool& render, vec3 position)
+// {
+//     render.matrices[index] = translate(mat4(1.0f), position);
+//     shader.update_ssbo(index, sizeof(mat4), &render.matrices[index]);
+// }
+
 void shader::draw(camera& camera, bufferObject& buffer)
 {
     // Use the shader program
@@ -244,18 +179,46 @@ void shader::draw(camera& camera, bufferObject& buffer)
 //CREATE_SHADER_BUFFER_STORAGE
 void shader::create_ssbo(uint binding, uint size, const void * data)
 {
-    cout << "creating ssbo..." << endl;
-    ssbo.push_back(0);
-    ssbo_map.push_back(0);
+    if (data == NULL) 
+    {
+        // cout << "!!ssbo data is empty!!!" << endl;
+        throw std::runtime_error("!!ssbo data is empty!!!");
+        return;
+    }
+    // cout << "creating ssbo..." << endl;
+    // ssbo.push_back(0);
+    // ssbo_map.push_back(0);
 
-    glGenBuffers(1, &ssbo[ssboIndex]); // by address
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo[ssboIndex]);
+    // glGenBuffers(1, &ssbo[ssboIndex]); // by address
+    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo[ssboIndex]);
+    // glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, data, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+    // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, ssbo[ssboIndex]); // by value
+    // // ssbo_map[ssboIndex] = 
+    // ssbo_map.push_back(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
+    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+
+    // ssboIndex++;
+
+    GLuint buffer;                 // New SSBO handle
+    glGenBuffers(1, &buffer);      // Generate the SSBO
+    ssbo.push_back(buffer);        // Add the handle to the vector
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, buffer);
     glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, data, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, ssbo[ssboIndex]); // by value
-    ssbo_map[ssboIndex] = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, buffer);
+
+    // Map the buffer and store the mapped pointer in the vector
+    void* mappedBuffer = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+    ssbo_map.push_back(mappedBuffer); // Store the mapped pointer
+
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind the buffer
 
     ssboIndex++;
+}
+
+void shader::update_ssbo(uint index, uint size, const void *data)
+{
+    memcpy(ssbo_map[index], data, size);
 }
 
 void shader::triangle_debug()
@@ -285,42 +248,6 @@ int shader::get_uniform_location(const char *name)
         cout << "uniform location not set" << endl;
         return -1;
     }
-}
-
-// =======================================================================================
-//
-// Render Pool
-//
-// =======================================================================================
-renderPool::renderPool()
-{
-    cout << "creating renderPool object..." << endl;
-}
-
-renderPool::~renderPool()
-{
-    cout << "deleting renderPool object..." << endl;
-}
-
-void renderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
-{
-    // rp.commands[i].count           = objects.object[i].indexCount;
-    // rp.commands[i].instanceCount   = 1; // objects.object[i][i].instanceCount
-    // rp.commands[i].firstIndex      = indexOffset;
-    // rp.commands[i].baseVertex      = vertexOffset;
-    // rp.commands[i].baseInstance    = instanceOffset;
-
-    // indexOffset     += objects.object[i].indexCount;
-    // vertexOffset    += objects.object[i].vertexCount;
-    // instanceOffset  += 1;
-
-    commands.push_back(DrawElementsIndirectCommand(i.size(), 1, indices.size(), vertices.size(), count));
-    vertices.insert(vertices.end(), v.begin(), v.end());
-    indices.insert(indices.end(), i.begin(), i.end());
-
-    count++;
-
-    matrices.push_back(translate(mat4(1.0f), position));
 }
 
 // =======================================================================================
@@ -445,3 +372,4 @@ uint texture::handleByteSize()
 {
     return bindless_texture_handles.size() * sizeof(GLuint64);
 }
+
