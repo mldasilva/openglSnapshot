@@ -102,7 +102,16 @@ int main(void)
 
     render_main.insert(cone.vertices, cone.indices, vec3(0, -1, 0));
 
-    jolt.create_object(render_jolt, enviroment_dynamic, cube, Vec3(3, 5, 4), Quat::sIdentity());
+    for (size_t i = 0; i < 10; i++)
+    {
+        /* code */
+        jolt.create_object(render_jolt, enviroment_dynamic, cube, Vec3(i, 5, 0), Quat::sIdentity());
+    }
+    
+    BodyID id = jolt.create_object(render_jolt, player, cube, Vec3(0, 0, 0), Quat::sIdentity());
+    
+    // floor
+    jolt.create_shape(new BoxShape(Vec3(10.0f, 1.0f, 10.0f)), false, Vec3(0.0, -1.0, 0.0));
 
     // ===============================================================
     // textures
@@ -124,16 +133,6 @@ int main(void)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    // ===============================================================
-    // physics
-    // ===============================================================
-
-	BodyInterface &body_interface = jolt.get_interface();
-
-    BodyID floor     = jolt.create_shape(new BoxShape(Vec3(100.0f, 1.0f, 100.0f)), Vec3(0.0, -1.0, 0.0), Quat::sIdentity(),  EMotionType::Static, Layers::NON_MOVING, EActivation::DontActivate);
-    
-    // BodyID sphere    = jolt.create_shape(new SphereShape(0.5f), Vec3(0.0, 20.0, 0.0), Quat::sIdentity(), EMotionType::Dynamic, Layers::MOVING, EActivation::Activate);
-
     // ===============================================================
     // finalizing before scene
     // ===============================================================
@@ -159,7 +158,13 @@ int main(void)
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTick;
 
-        /* controls here */ 
+        
+        // Vec3 position
+        Vec3 p = Vec3(camera.target.x, camera.target.y + 1, camera.target.z);
+        jolt.interface->MoveKinematic(id, p, JPH::Quat::sIdentity(), deltaTime);
+        jolt.check_ground(id);
+        
+        /* controls here */     
         controller.mouse_controls(window, deltaTime, !imGuiHovered);
 
         /* Render here */

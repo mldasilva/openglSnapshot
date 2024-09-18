@@ -19,8 +19,13 @@
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
+
+#include <Jolt/Physics/Collision/RayCast.h> // Include this for raycasting
+#include <Jolt/Physics/Collision/CastResult.h> // Include this for raycasting
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
 
 // STL includes
 #include <iostream>
@@ -223,6 +228,12 @@ class joltWrapper
 {
 private:
 
+	// Ground detection threshold
+	const float cGroundDetectionThreshold = 1.0f;
+
+	// The threshold below which we consider an object to have fallen off the world
+	const float cKillThreshold = -50.0f;  
+
 	// This is the max amount of rigid bodies that you can add to the physics system. If you try to add more you'll get an error.
 	// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
 	const uint cMaxBodies = 1024;
@@ -301,9 +312,13 @@ public:
 	void joltRegister();
 	void joltUnregister();
 	void update();
-	BodyInterface& get_interface();
+	// BodyInterface& get_interface();
 	BodyID create_object(renderPool& render, objectType inType, model &inModel, RVec3Arg inPosition, QuatArg inRot);
-	BodyID create_shape(const Shape *inShape, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation);
+	BodyID create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation = Quat::sIdentity(), 
+		EMotionType inMotionType = EMotionType::Static, 
+		ObjectLayer inObjectLayer = Layers::NON_MOVING, 
+		EActivation inActivation = EActivation::DontActivate);
+	bool check_ground(BodyID inBodyID);
 	void optimize();
 };
 

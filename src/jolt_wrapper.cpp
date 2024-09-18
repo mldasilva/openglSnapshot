@@ -26,9 +26,9 @@ joltWrapper::~joltWrapper()
 	for (BodyID bodyID : bodyIDs)
     {
 		// Remove the shape from the physics system. Note that the sphere itself keeps all of its state and can be re-added at any time.
-        get_interface().RemoveBody(bodyID);
+        interface->RemoveBody(bodyID);
 		// Destroy the shape. After this the sphere ID is no longer valid.
-		get_interface().DestroyBody(bodyID);
+		interface->DestroyBody(bodyID);
     }
 
 	joltUnregister();
@@ -69,21 +69,45 @@ void joltWrapper::update()
 {
 	// Step the world
 	ps.Update(cDeltaTime, cCollisionSteps, temp_allocator_ptr, job_system_ptr);
+	
+
+	
 	int i = 0;
 	for (const auto& bodyID : bodyIDs)
     {
-		matrices[i] = interface->GetWorldTransform(bodyID);
+		if(interface->IsActive(bodyID))
+		{
+			matrices[i] = interface->GetWorldTransform(bodyID);
+			
+			// cout << "updating[" << i << "]" << endl;
+
+			// Check if the object has fallen below the threshold
+            if (interface->GetPosition(bodyID).GetY() < cKillThreshold) {
+                // std::cout << "Body ID " << bodyID.GetIndex() << " has fallen below the threshold." << std::endl;
+
+                // Option 1: Deactivate the body (stop its simulation)
+                interface->DeactivateBody(bodyID);
+
+                // Option 2: Remove the body from the simulation
+                // interface->RemoveBody(bodyID);
+
+                // Option 3: Reset the object's position to a safe location (e.g., a spawn point)
+                // bodyInterface.SetPosition(bodyID, JPH::Vec3(0.0f, 10.0f, 0.0f));
+                // bodyInterface.SetLinearVelocity(bodyID, JPH::Vec3::sZero());  // Reset velocity as well
+            }
+
+		}
 		i++;
 	}
 	
 }
 
-BodyInterface &joltWrapper::get_interface()
-{
-	// The main way to interact with the bodies in the physics system is through the body interface. There is a locking and a non-locking
-	// variant of this. We're going to use the locking version (even though we're not planning to access bodies from multiple threads)
-    return ps.GetBodyInterface();
-}
+// BodyInterface &joltWrapper::get_interface()
+// {
+// 	// The main way to interact with the bodies in the physics system is through the body interface. There is a locking and a non-locking
+// 	// variant of this. We're going to use the locking version (even though we're not planning to access bodies from multiple threads)
+//     return ps.GetBodyInterface();
+// }
 
 BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &inModel, RVec3Arg inPosition, QuatArg inRot)
 {
@@ -101,27 +125,35 @@ BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &
 	if(inType == enviroment_static)
     {
         result = create_shape(
-            new BoxShape(Vec3(1.0f, 1.0f, 1.0f)), 
-            inPosition, Quat::sIdentity(),  
+            new BoxShape(Vec3(1.0f, 1.0f, 1.0f)), false, 
+            inPosition, Quat::sIdentity(), 
             EMotionType::Static, 
             Layers::NON_MOVING, 
             EActivation::DontActivate
         );
+		
     }
     else if(inType == enviroment_dynamic)
     {
         result = create_shape(
-            new BoxShape(Vec3(1.0f, 1.0f, 1.0f)), 
+            new BoxShape(Vec3(1.0f, 1.0f, 1.0f)), false, 
             inPosition, Quat::sIdentity(),  
             EMotionType::Dynamic, 
             Layers::MOVING, 
             EActivation::Activate
         );
-        // pJolt->get_interface().SetRestitution(joltID, 0.4f);
+        interface->SetRestitution(result, 0.2f);
+		interface->SetFriction(result, 4.0f);
     }
     else if(inType == player)
     {
-        
+        result = create_shape(
+            new CapsuleShape(2.0f, 1.0f), false, 
+            inPosition, Quat::sIdentity(),  
+            EMotionType::Kinematic, 
+            Layers::MOVING, 
+            EActivation::DontActivate
+        );
     }
     else if(inType == npc)
     {
@@ -141,11 +173,13 @@ BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &
 /// @param inObjectLayer 
 /// @param inActivation 
 /// @return 
-BodyID joltWrapper::create_shape(const Shape *inShape, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation)
+BodyID joltWrapper::create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation)
 {
 	// inShape->SetEmbedded();
 	BodyCreationSettings settings(inShape, inPosition, inRotation, inMotionType, inObjectLayer);
     
+	settings.mIsSensor = isSensor;
+	// settings.mFriction = 0.5f;
 	// return get_interface().CreateAndAddBody(settings, inActivation);
 
 	// Create the body in the physics system
@@ -158,6 +192,39 @@ BodyID joltWrapper::create_shape(const Shape *inShape, RVec3Arg inPosition, Quat
 
 	// bodyIDs.push_back(b_id); // no more! use ps.GetBodies() bodyIDs is for rendering simulations
 	return b_id;
+}
+
+bool joltWrapper::check_ground(BodyID inBodyID)
+{
+    // JPH::BodyInterface& bodyInterface = physicsSystem.GetBodyInterface();
+
+    // Get player position and adjust for capsule height
+    JPH::Vec3 playerPosition = interface->GetPosition(inBodyID);
+    float capsuleHalfHeight = 2.0f; // Adjust this based on your player capsule's half-height
+    JPH::Vec3 start = playerPosition - JPH::Vec3(0.0f, capsuleHalfHeight, 0.0f);  // Start at player's feet
+    JPH::Vec3 end = start + JPH::Vec3(0.0f, -1.0f, 0.0f); // Cast 1 unit downward
+
+
+	// 	SpecifiedBroadPhaseLayerFilter(BroadPhaseLayers::NON_MOVING):
+	//     This filter is checking against a specific broad phase layer. In your case, it's BroadPhaseLayers::NON_MOVING, which likely refers to static objects like the ground or other immovable entities.
+
+	// SpecifiedObjectLayerFilter(Layers::NON_MOVING):
+	//     This filter applies to objects in the NON_MOVING layer, meaning it will only consider objects that are categorized under that layer for the raycast.
+
+    // Perform the raycast
+    JPH::RRayCast ray(start, end - start);
+    JPH::RayCastResult result;
+    bool hasHit = ps.GetNarrowPhaseQuery().CastRay(ray, result, 
+		SpecifiedBroadPhaseLayerFilter(BroadPhaseLayers::NON_MOVING), SpecifiedObjectLayerFilter(Layers::NON_MOVING) );
+
+    // Debug output
+    if (hasHit) {
+        std::cout << "Ray hit! Fraction: " << result.mFraction << std::endl;
+        return std::abs(result.mFraction) < cGroundDetectionThreshold;
+    } else {
+        std::cout << "Ray did not hit anything." << std::endl;
+        return false;
+    }
 }
 
 void joltWrapper::optimize()
