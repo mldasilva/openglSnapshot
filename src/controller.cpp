@@ -23,14 +23,15 @@ void controller::mouse_button_callback(GLFWwindow* window, int button, int actio
         // printf("mouse click \n");
     }
 
-    if (button == GLFW_MOUSE_BUTTON_LEFT)
+    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
     {
-        
+        // cout << "mouse left" << endl;
     }
 }
 
 void controller::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
+{   
+    controllerState* data = static_cast<controllerState*>(glfwGetWindowUserPointer(window));
     // action == GLFW_PRESS makes it only fire once on down stroke
     if(key == GLFW_KEY_ESCAPE)
     {
@@ -39,6 +40,16 @@ void controller::key_callback(GLFWwindow* window, int key, int scancode, int act
     if(key == GLFW_KEY_R && action == GLFW_PRESS)
     {
 
+    }
+    if(key == GLFW_KEY_SPACE && action == GLFW_PRESS)
+    {
+        data->isJumping = true;
+        // cout << "jumping" << endl;
+    }
+    if(key == GLFW_KEY_SPACE && action != GLFW_PRESS)
+    {
+        data->isJumping = false;
+        // cout << "not jumping" << endl;
     }
 }
 
@@ -53,7 +64,7 @@ void controller::window_position_callback(GLFWwindow* window, int xpos, int ypos
     std::cout << "Window moved to position: (" << xpos << ", " << ypos << ")" << std::endl;
 }
 
-void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active)
+void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active, vec3 *outMouseDirection)
 {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && active) 
     {
@@ -99,18 +110,22 @@ void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active
 
         // Calculate the intersection point
         vec3 intersectionPoint = rayOrigin + t * rayDirection;
-
+        // cout << intersectionPoint << endl;
         vec3 d = normalize(intersectionPoint - _camera->target);
         
-        float speed = 6.0f;
-        _camera->move(vec3(d.x * deltaTime * speed, 0 , d.z * deltaTime * speed));
-        
+        *outMouseDirection = d;
+        // float speed = 6.0f;
+        // _camera->move(vec3(d.x * deltaTime * speed, 0 , d.z * deltaTime * speed));
+        // return d;
+        return;
     }
 
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && active) 
     {
         _camera->rotate(2.0f);
     }
+    // return vec3(0);
+    *outMouseDirection = vec3(0);
 }
 
 controller::controller(GLFWwindow *window, camera *camera)
@@ -118,9 +133,11 @@ controller::controller(GLFWwindow *window, camera *camera)
     cout << "creating controller object..." << endl;
     // glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
     _camera = camera;
+    
+    cs.isJumping = false;
 
     // Set the user pointer to the camera instance
-    glfwSetWindowUserPointer(window, camera);
+    glfwSetWindowUserPointer(window, &cs);
 
     // mouse position
     glfwSetCursorPosCallback(window, cursor_position_callback);

@@ -69,9 +69,7 @@ void joltWrapper::update()
 {
 	// Step the world
 	ps.Update(cDeltaTime, cCollisionSteps, temp_allocator_ptr, job_system_ptr);
-	
 
-	
 	int i = 0;
 	for (const auto& bodyID : bodyIDs)
     {
@@ -83,7 +81,7 @@ void joltWrapper::update()
 
 			// Check if the object has fallen below the threshold
             if (interface->GetPosition(bodyID).GetY() < cKillThreshold) {
-                // std::cout << "Body ID " << bodyID.GetIndex() << " has fallen below the threshold." << std::endl;
+                // cout << "Body ID " << bodyID.GetIndex() << " has fallen below the threshold." << endl;
 
                 // Option 1: Deactivate the body (stop its simulation)
                 interface->DeactivateBody(bodyID);
@@ -92,8 +90,8 @@ void joltWrapper::update()
                 // interface->RemoveBody(bodyID);
 
                 // Option 3: Reset the object's position to a safe location (e.g., a spawn point)
-                // bodyInterface.SetPosition(bodyID, JPH::Vec3(0.0f, 10.0f, 0.0f));
-                // bodyInterface.SetLinearVelocity(bodyID, JPH::Vec3::sZero());  // Reset velocity as well
+                // bodyInterface.SetPosition(bodyID, Vec3(0.0f, 10.0f, 0.0f));
+                // bodyInterface.SetLinearVelocity(bodyID, Vec3::sZero());  // Reset velocity as well
             }
 
 		}
@@ -101,6 +99,32 @@ void joltWrapper::update()
 	}
 	
 }
+
+// void joltWrapper::updateKinematic(BodyID inBody, Vec3 inPosition, float deltaTime)
+// {
+//     if(check_ground(inBody))
+//     {
+//         // Reset vertical velocity when grounded
+//         // velocity.SetY(0.0f);
+
+//         // Move kinematic body to the desired position
+//         interface->MoveKinematic(inBody, inPosition, Quat::sIdentity(), deltaTime);
+//     }
+//     else
+//     {
+//         // Apply gravity to velocity if not grounded
+//         velocity += cGravity * deltaTime * 10;
+
+//         // Update the position by adding the velocity to it
+//         Vec3 newPosition = inPosition + velocity * deltaTime;
+
+//         // Output falling for debug purposes
+//         cout << "falling " << endl;
+
+//         // Move the player to the new position (affected by gravity)
+//         interface->MoveKinematic(inBody, newPosition, Quat::sIdentity(), deltaTime);
+//     }
+// }
 
 // BodyInterface &joltWrapper::get_interface()
 // {
@@ -117,7 +141,7 @@ BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &
 	render.insert(inModel.vertices, inModel.indices);
 
 	// Rotation (quaternion)
-    // JPH::Quat rotation = JPH::Quat::sRotation(JPH::Vec3::sAxisY(), JPH::DegreesToRadians(45.0f));  // Rotate 45 degrees around the Y axis
+    // Quat rotation = Quat::sRotation(Vec3::sAxisY(), DegreesToRadians(45.0f));  // Rotate 45 degrees around the Y axis
 
     // Create the transformation matrix
 	matrices.push_back(RMat44::sRotationTranslation(inRot, inPosition));
@@ -179,7 +203,7 @@ BodyID joltWrapper::create_shape(const Shape *inShape, bool isSensor, RVec3Arg i
 	BodyCreationSettings settings(inShape, inPosition, inRotation, inMotionType, inObjectLayer);
     
 	settings.mIsSensor = isSensor;
-	// settings.mFriction = 0.5f;
+	// settings.mFriction = 10.0f;
 	// return get_interface().CreateAndAddBody(settings, inActivation);
 
 	// Create the body in the physics system
@@ -194,39 +218,6 @@ BodyID joltWrapper::create_shape(const Shape *inShape, bool isSensor, RVec3Arg i
 	return b_id;
 }
 
-bool joltWrapper::check_ground(BodyID inBodyID)
-{
-    // JPH::BodyInterface& bodyInterface = physicsSystem.GetBodyInterface();
-
-    // Get player position and adjust for capsule height
-    JPH::Vec3 playerPosition = interface->GetPosition(inBodyID);
-    float capsuleHalfHeight = 2.0f; // Adjust this based on your player capsule's half-height
-    JPH::Vec3 start = playerPosition - JPH::Vec3(0.0f, capsuleHalfHeight, 0.0f);  // Start at player's feet
-    JPH::Vec3 end = start + JPH::Vec3(0.0f, -1.0f, 0.0f); // Cast 1 unit downward
-
-
-	// 	SpecifiedBroadPhaseLayerFilter(BroadPhaseLayers::NON_MOVING):
-	//     This filter is checking against a specific broad phase layer. In your case, it's BroadPhaseLayers::NON_MOVING, which likely refers to static objects like the ground or other immovable entities.
-
-	// SpecifiedObjectLayerFilter(Layers::NON_MOVING):
-	//     This filter applies to objects in the NON_MOVING layer, meaning it will only consider objects that are categorized under that layer for the raycast.
-
-    // Perform the raycast
-    JPH::RRayCast ray(start, end - start);
-    JPH::RayCastResult result;
-    bool hasHit = ps.GetNarrowPhaseQuery().CastRay(ray, result, 
-		SpecifiedBroadPhaseLayerFilter(BroadPhaseLayers::NON_MOVING), SpecifiedObjectLayerFilter(Layers::NON_MOVING) );
-
-    // Debug output
-    if (hasHit) {
-        std::cout << "Ray hit! Fraction: " << result.mFraction << std::endl;
-        return std::abs(result.mFraction) < cGroundDetectionThreshold;
-    } else {
-        std::cout << "Ray did not hit anything." << std::endl;
-        return false;
-    }
-}
-
 void joltWrapper::optimize()
 {
 	// Optional step: Before starting the physics simulation you can optimize the broad phase. This improves collision detection performance (it's pointless here because we only have 2 bodies).
@@ -235,13 +226,197 @@ void joltWrapper::optimize()
 	ps.OptimizeBroadPhase();
 }
 
+playerController::playerController(renderPool& inRenderPool, joltWrapper *inJolt, model& inModel, Vec3 inPosition)
+{
+	pJolt = inJolt;
+	position = inPosition;
+
+	// bodyID = pJolt->create_object(inRenderPool, player, inModel, inPosition, Quat::sIdentity());
+	
+	// breaking out create object for player so we can control capsule shape 
+	// without changing creat object parameters
+	inRenderPool.insert(inModel.vertices, inModel.indices);
+	// pJolt->matrices.push_back(RMat44::sRotationTranslation(Quat::sIdentity(), inPosition));
+	bodyID = pJolt->create_shape(
+		new CapsuleShape(cCapsuleHalfHeight, cCapsuleRadius), false, 
+		inPosition, Quat::sIdentity(),  
+		EMotionType::Kinematic, 
+		Layers::MOVING, 
+		EActivation::DontActivate
+	);
+	// removing player body id from jolt wrapper bodyIDs will stop it 
+	// from being added to the ssbo update so we can add it to another 
+	// ssbo for another shader allowing player to be shaded else where
+	// pJolt->bodyIDs.push_back(bodyID);
+
+	// Create an identity matrix (no rotation, no translation)
+	matrices.push_back(Mat44::sTranslation(inPosition));
+}
+
+bool playerController::cast_ray(Vec3 start, Vec3 end, float *outDepth)
+{
+	// 	SpecifiedBroadPhaseLayerFilter(BroadPhaseLayers::NON_MOVING):
+	//     This filter is checking against a specific broad phase layer. In your case, it's BroadPhaseLayers::NON_MOVING, which likely refers to static objects like the ground or other immovable entities.
+
+	// SpecifiedObjectLayerFilter(Layers::NON_MOVING):
+	//     This filter applies to objects in the NON_MOVING layer, meaning it will only consider objects that are categorized under that layer for the raycast.
+
+    // Perform the raycast
+    RRayCast ray(start, end - start);
+    RayCastResult result;
+	
+    bool hasHit = pJolt->ps.GetNarrowPhaseQuery().CastRay(ray, result, 
+		SpecifiedBroadPhaseLayerFilter(BroadPhaseLayers::NON_MOVING), 
+		SpecifiedObjectLayerFilter(Layers::NON_MOVING));
+
+    // Debug output
+    if (hasHit) 
+	{
+		// cast ray feels like it works backwards, have to subtract result from length
+		// to get displacement require for corretion
+
+        // cout << "Ray hit! Fraction: " << result.mFraction << endl;
+		// *outDepth = abs(result.mFraction) - (end - start).Length();
+		
+		if(outDepth != nullptr)
+		{
+			*outDepth = abs(result.mFraction) - (end - start).Length();
+		}
+		
+        return true;// < cGroundDetectionThreshold;
+    } 
+	else 
+	{
+        // cout << "Ray did not hit anything." << endl;
+        return false;
+		
+    }
+}
+
+Vec3 playerController::cast_shape(Vec3 inDirection, Vec3 inPosition)
+{
+    Vec3 result = Vec3::sZero();
+
+    if(inDirection != Vec3::sZero())
+    {
+        const Shape* bodyShape = pJolt->interface->GetShape(bodyID);
+        RShapeCast shapeCaster(bodyShape, Vec3(1,1,1), Mat44::sTranslation(inPosition), inDirection.Normalized());
+        
+        // Set up shape cast settings with small penetration tolerance to prevent overlap
+        ShapeCastSettings shapeCastSettings;
+        MyCastShapeCollector collector;
+
+        // Perform the shape cast
+        pJolt->ps.GetNarrowPhaseQuery().CastShape(
+            shapeCaster, shapeCastSettings, 
+            Vec3::sZero(), collector,
+            SpecifiedBroadPhaseLayerFilter(BroadPhaseLayers::NON_MOVING),
+            SpecifiedObjectLayerFilter(Layers::NON_MOVING),
+			*pJolt->pBodyFilter,
+			// BodyFilter(),
+			ShapeFilter()
+        );
+
+        // Check if any collisions occurred
+        if (collector.HasHits())
+        {
+            for (size_t i = 0; i < collector.mHits.size(); i++) {
+                const ShapeCastResult& hitResult = collector.mHits[i];
+                
+                // Ignore floor collisions by checking the Y component of the penetration axis
+                if(hitResult.mPenetrationDepth > 0.01f)
+                {
+                    // cout << "Hit " << i << ": " << endl;
+                    // cout << "  Fraction: " << hitResult.mFraction << endl;
+                    // cout << "  Penetration Depth: " << hitResult.mPenetrationDepth << endl;
+                    // cout << "  Penetration Axis: " << hitResult.mPenetrationAxis << endl;
+                    // cout << "  Contact Point on Shape1: " << hitResult.mContactPointOn1 << endl;
+                    // cout << "  Contact Point on Shape2: " << hitResult.mContactPointOn2 << endl;
+
+					Vec3 horizontal = Vec3(hitResult.mPenetrationAxis.GetX(), 0, hitResult.mPenetrationAxis.GetZ());
+                    result += hitResult.mPenetrationDepth * hitResult.mPenetrationAxis.Normalized();
+                }
+            }
+        }
+    }
+
+    return result;
+}
+
+
+void playerController::update(Vec3 inputDirection, bool inputJump, float deltaTime)
+{
+	
+	// Get player position and adjust for capsule height
+	// Adjust this based on your player capsule's half-height
+
+	// Start at player's feet
+    Vec3 start = position - Vec3(0.0f, cCapsuleHalfHeight, 0.0f);  
+    Vec3 end = start + Vec3(0.0f, -0.01f, 0.0f);
+	
+	isGrounded = cast_ray(start, end, nullptr);
+	// isGrounded = true;
+	if (isGrounded) 
+	{
+		// Reset vertical velocity when grounded
+		velocity.SetY(0.0f);
+		position.SetY(1.0f);
+
+		// Handle jumping input (e.g., space bar)
+		if (inputJump) {
+			velocity.SetY(jumpForce);  // Apply jump force
+		}
+
+		velocity.SetX(inputDirection.GetX() * playerSpeed);
+		velocity.SetZ(inputDirection.GetZ() * playerSpeed);
+	} 
+	else 
+	{
+		if(velocity.GetY() > 0.3f) // up velocity the > is when to start the double gravity
+		{
+			// Apply gravity if not grounded
+			velocity += Vec3(0.0f, cGravity * deltaTime , 0.0f);
+		}
+		else // down velocity
+		{
+			velocity += Vec3(0.0f, cGravityFall * deltaTime , 0.0f);
+		}
+
+		// Cap fall speed
+		if (velocity.GetY() < cMaxFallSpeed) 
+		{
+			velocity.SetY(cMaxFallSpeed);
+		}
+	}
+	
+	position -= cast_shape(velocity, position); // collision resolution
+	position += velocity * deltaTime; // Update player position based on velocity
+
+	// Move the player body
+	pJolt->interface->MoveKinematic(bodyID, position, Quat::sIdentity(), deltaTime);
+	
+	// temp need to update matrices
+	matrices[0] = Mat44::sTranslation(position);
+
+}
+
 // Function to print a single RMat44 matrix
-void console_RMat44(const JPH::RMat44& mat) {
+void console_RMat44(const RMat44& mat) {
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
-            std::cout << mat(i, j) << " ";
+            cout << mat(i, j) << " ";
         }
-        std::cout << std::endl;
+        cout << endl;
     }
-    std::cout << std::endl;
+    cout << endl;
+}
+
+vec3 v(Vec3 input)
+{
+	return vec3(input.GetX(), input.GetY(), input.GetZ());
+}
+
+Vec3 v(vec3 input)
+{
+	return Vec3(input.x, input.y, input.z);
 }

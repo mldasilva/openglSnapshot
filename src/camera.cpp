@@ -12,11 +12,13 @@ camera::camera(uint width, uint height)
     projection = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, -1.0f, 100.0f);
 
     // View matrix setup (camera looking at the scene)
-    position = glm::vec3(-15.0f, 15.0f, 15.0f);   // Camera position
-    target = glm::vec3(0.0f, 0.0f, 0.0f); // Look at the origin
+    position = glm::vec3(-15.0f, 15.0f, 15.0f);     // Camera position
+    target = glm::vec3(0.0f, 0.0f, 0.0f);           // Look at the origin
 
-    up = glm::vec3(0.0f, 1.0f, 0.0f);           // Up vector
+    up = glm::vec3(0.0f, 1.0f, 0.0f);               // Up vector
     view = glm::lookAt(position, target, up);
+
+    offset = position - target;
 }
 
 camera::~camera()
@@ -41,6 +43,9 @@ void camera::rotate(float angleAddition)
 
     // Step 4: Create the view matrix using the new camera position
     view = glm::lookAt(position, target, up);
+
+    // extra for calculating position when moving camera target to a vec3
+    offset = position - target;
 }
 
 void camera::move(vec3 translate)
@@ -52,6 +57,8 @@ void camera::move(vec3 translate)
 
 void camera::moveTo(vec3 target)
 {
-    // target = 
-    // view = glm::lookAt(position, target, up);
+    camera::target = target;
+    camera::position = target + offset;
+
+    view = glm::lookAt(position, target, up);
 }

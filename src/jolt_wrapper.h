@@ -23,6 +23,7 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyActivationListener.h>
 
+#include <Jolt/Physics/Collision/ShapeCast.h>
 #include <Jolt/Physics/Collision/RayCast.h> // Include this for raycasting
 #include <Jolt/Physics/Collision/CastResult.h> // Include this for raycasting
 #include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
@@ -179,7 +180,7 @@ public:
 	// See: ContactListener
 	virtual ValidateResult	OnContactValidate(const Body &inBody1, const Body &inBody2, RVec3Arg inBaseOffset, const CollideShapeResult &inCollisionResult) override
 	{
-		cout << "Contact validate callback" << endl;
+		// cout << "Contact validate callback" << endl;
 
 		// Allows you to ignore a contact before it is created (using layers to not make objects collide is cheaper!)
 		return ValidateResult::AcceptAllContactsForThisBodyPair;
@@ -187,17 +188,17 @@ public:
 
 	virtual void OnContactAdded(const Body &inBody1, const Body &inBody2, const ContactManifold &inManifold, ContactSettings &ioSettings) override
 	{
-		cout << "A contact was added" << endl;
+		// cout << "A contact was added" << endl;
 	}
 
 	virtual void OnContactPersisted(const Body &inBody1, const Body &inBody2, const ContactManifold &inManifold, ContactSettings &ioSettings) override
 	{
-		cout << "A contact was persisted" << endl;
+		// cout << "A contact was persisted" << endl;
 	}
 
 	virtual void OnContactRemoved(const SubShapeIDPair &inSubShapePair) override
 	{
-		cout << "A contact was removed" << endl;
+		// cout << "A contact was removed" << endl;
 	}
 };
 
@@ -207,14 +208,114 @@ class MyBodyActivationListener : public BodyActivationListener
 public:
 	virtual void OnBodyActivated(const BodyID &inBodyID, uint64 inBodyUserData) override
 	{
-		cout << "A body got activated" << endl;
+		// cout << "A body got activated" << endl;
 	}
 
 	virtual void OnBodyDeactivated(const BodyID &inBodyID, uint64 inBodyUserData) override
 	{
-		cout << "A body went to sleep" << endl;
+		// cout << "A body went to sleep" << endl;
 	}
 };
+
+class MyCastShapeCollector : public CastShapeCollector {
+public:
+    // Constructor
+    MyCastShapeCollector() : CastShapeCollector() {}
+
+    // Store hit results when a hit is found
+    virtual void AddHit(const ResultType &inResult) override {
+        // Store the hit
+        mHits.push_back(inResult);
+
+        // Update the early out fraction
+        UpdateEarlyOutFraction(inResult.mFraction);
+		mHasHits = true;  // Mark that we have recorded a hit
+    }
+
+    // Function to retrieve all the hits
+    const std::vector<ResultType>& GetHits() const {
+        return mHits;
+    }
+
+    // Function to get the earliest hit fraction
+    float GetHitFraction() const {
+        return !mHits.empty() ? mHits.front().mFraction : FLT_MAX;
+    }
+
+    // Get the penetration depth of the first hit
+    float GetPenetrationDepth() const {
+        return !mHits.empty() ? mHits.front().mPenetrationDepth : 0.0f;
+    }
+
+	// Check if we have any hits
+    bool HasHits() const {
+        return mHasHits;
+    }
+	std::vector<ResultType> mHits;  // Store all hits
+private:
+    
+	bool mHasHits = false;  // Track whether any hits were recorded
+};
+
+class MyBodyFilter : public BodyFilter
+{
+public:
+    MyBodyFilter(BodyID ignoreBodyID) : mIgnoreBodyID(ignoreBodyID) {}
+
+    // Override the ShouldCollide function
+    virtual bool ShouldCollide(const BodyID &inBodyID) const override
+    {
+        // Ignore the body if it matches the one you want to filter out
+        return inBodyID != mIgnoreBodyID;
+    }
+
+private:
+    BodyID mIgnoreBodyID; // Store the ID of the body to ignore
+};
+// class MyCastShapeCollector : public CastShapeCollector {
+// public:
+//     // Constructor
+//     MyCastShapeCollector() : CastShapeCollector() {}
+
+//     // Reset the collector to prepare for a new query
+//     virtual void Reset() override {
+//         mHits.clear();  // Clear previous hits
+//         // mEarlyOutFraction = FLT_MAX;  // Reset early out fraction
+//     }
+
+//     // Store hit results when a hit is found
+//     virtual void AddHit(const ResultType& inResult) override {
+//         // Add the hit to the list of hits
+//         mHits.push_back(inResult);
+
+//         // Update the early out fraction (to prevent unnecessary calculations)
+//         UpdateEarlyOutFraction(inResult.mFraction);
+//     }
+
+//     // Function to retrieve all the hits
+//     const std::vector<ResultType>& GetHits() const {
+//         return mHits;
+//     }
+
+//     // Check if we have any hits
+//     bool HasHits() const {
+//         return !mHits.empty();
+//     }
+
+//     // Function to get the first hit (if available)
+//     const ResultType& GetFirstHit() const {
+//         JPH_ASSERT(!mHits.empty());
+//         return mHits.front();
+//     }
+
+//     // Function to get the earliest hit fraction
+//     float GetHitFraction() const {
+//         return !mHits.empty() ? mHits.front().mFraction : FLT_MAX;
+//     }
+
+// private:
+//     std::vector<ResultType> mHits;  // Store all hits
+// };
 
 enum objectType
 {
@@ -227,9 +328,6 @@ enum objectType
 class joltWrapper
 {
 private:
-
-	// Ground detection threshold
-	const float cGroundDetectionThreshold = 1.0f;
 
 	// The threshold below which we consider an object to have fallen off the world
 	const float cKillThreshold = -50.0f;  
@@ -258,7 +356,11 @@ private:
 	// If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
 	const int cCollisionSteps = 1;
 
+	// Player's current velocity (should be stored in the player object, this is just an example)
+    Vec3 velocity = Vec3(0.0f, 0.0f, 0.0f);  // This needs to persist between updates
 public:
+
+	MyBodyFilter *pBodyFilter; // filter out floor in collision
 
 	// Create mapping table from object layer to broadphase layer
 	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
@@ -312,14 +414,47 @@ public:
 	void joltRegister();
 	void joltUnregister();
 	void update();
+	// void updateKinematic(BodyID inBody, Vec3 inPosition, float deltaTime);
 	// BodyInterface& get_interface();
 	BodyID create_object(renderPool& render, objectType inType, model &inModel, RVec3Arg inPosition, QuatArg inRot);
 	BodyID create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation = Quat::sIdentity(), 
 		EMotionType inMotionType = EMotionType::Static, 
 		ObjectLayer inObjectLayer = Layers::NON_MOVING, 
 		EActivation inActivation = EActivation::DontActivate);
-	bool check_ground(BodyID inBodyID);
+	
 	void optimize();
 };
 
+class playerController {
+private:
+	// Ground detection threshold
+	const float cGroundDetectionThreshold 	= 0.0f;
+	const float cCapsuleHalfHeight 			= 1.0f;
+	const float cCapsuleRadius 				= 1.0f;
+	const float cGravity 					= -20.0f;
+	const float cGravityFall 				= cGravity * 2.0f;
+	const float cMaxFallSpeed 				= -50.0f;
+
+	joltWrapper *pJolt;
+	
+public:
+    BodyID bodyID;
+    Vec3 position  		= Vec3::sZero();
+    Vec3 velocity 		= Vec3::sZero();
+    bool isGrounded 	= false;
+	bool isJumping 		= false;
+    float jumpForce 	= 12.0f;
+	float playerSpeed 	= 8;
+
+
+	vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
+
+	playerController(renderPool& inRenderPool, joltWrapper *inJolt, model& inModel, Vec3 inPosition);
+	bool cast_ray(Vec3 start, Vec3 end, float *outDepth);
+	Vec3 cast_shape(Vec3 inDirection, Vec3 inPosition);
+	void update(Vec3 inputDirection, bool inputJump, float deltaTime);
+};
+
 void console_RMat44(const JPH::RMat44& mat);
+vec3 v(Vec3 input);
+Vec3 v(vec3 input);

@@ -14,10 +14,7 @@
 // lights
 // shadows
 // wfc - wave function collapse
-// particle engine
-// physics engine
 // sprite / billboard
-// animation
 
 //smaller things:
 //------------------
@@ -76,6 +73,9 @@ int main(void)
     string vertexPathJolt   = string(SHADER_DIR) + "/default_jolt.vs";
     string fragmentPathJolt = string(SHADER_DIR) + "/default_jolt.fs";
 
+    string vertexPathbb   = string(SHADER_DIR) + "/default_bb.vs"; // billboard
+    string fragmentPathbb = string(SHADER_DIR) + "/default_bb.fs";
+
     string cubePath     = string(MODELS_DIR) + "/cube.gltf";
     string conePath     = string(MODELS_DIR) + "/cube.gltf";
 
@@ -95,6 +95,9 @@ int main(void)
     shader          shader_jolt(vertexPathJolt.c_str(), fragmentPathJolt.c_str());
     renderPool      render_jolt;
 
+    shader          shader_bb(vertexPathbb.c_str(), fragmentPathbb.c_str());
+    renderPool      render_bb;
+
     joltWrapper     jolt; // Now we can create the actual physics system.
 
     model cube(cubePath.c_str());
@@ -102,17 +105,22 @@ int main(void)
 
     render_main.insert(cone.vertices, cone.indices, vec3(0, -1, 0));
 
-    for (size_t i = 0; i < 10; i++)
-    {
-        /* code */
-        jolt.create_object(render_jolt, enviroment_dynamic, cube, Vec3(i, 5, 0), Quat::sIdentity());
-    }
-    
-    BodyID id = jolt.create_object(render_jolt, player, cube, Vec3(0, 0, 0), Quat::sIdentity());
-    
+    // for (size_t i = 0; i < 10; i++)
+    // {
+    //     /* code */
+    //     jolt.create_object(render_jolt, enviroment_dynamic, cube, Vec3((i*2), 5, 0), Quat::sIdentity());
+    // }
+      
     // floor
-    jolt.create_shape(new BoxShape(Vec3(10.0f, 1.0f, 10.0f)), false, Vec3(0.0, -1.0, 0.0));
+    BodyID floor = jolt.create_shape(new BoxShape(Vec3(100.0f, 1.0f, 100.0f)), false, Vec3(0.0, -1.0, 0.0));
 
+    jolt.create_object(render_jolt, enviroment_static, cube, Vec3(3, 1, 3), Quat::sIdentity());
+    jolt.create_object(render_jolt, enviroment_static, cube, Vec3(0.5f, 1, 3), Quat::sIdentity());
+    // create player
+    playerController pc(render_bb, &jolt, cube, Vec3(-3.0f,10.0f,0.0f));
+    
+    MyBodyFilter floorFilter(floor);
+    jolt.pBodyFilter = &floorFilter;
     // ===============================================================
     // textures
     // ===============================================================
@@ -148,32 +156,40 @@ int main(void)
     shader_jolt.create_ssbo(3, textures.handleByteSize(), textures.handles());
     bufferObject bo_jolt(render_jolt.vertices, 8, render_jolt.indices, render_jolt.commands);
 
+    shader_bb.create_ssbo(4, pc.matrices.size() * sizeof(mat4), pc.matrices.data());
+    shader_bb.create_ssbo(5, textures.handleByteSize(), textures.handles());
+    bufferObject bo_player(render_bb.vertices, 8, render_bb.indices, render_bb.commands);
+
+
+    vec3 inputDirection = vec3();
+    std::cout << "hello world.." << std::endl;
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
-        jolt.update(); // physics tick
-        shader_jolt.update_ssbo(0, jolt.matrices.size() * sizeof(mat4), jolt.matrices.data());
-
         lastTick = currentTime;
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTick;
 
-        
-        // Vec3 position
-        Vec3 p = Vec3(camera.target.x, camera.target.y + 1, camera.target.z);
-        jolt.interface->MoveKinematic(id, p, JPH::Quat::sIdentity(), deltaTime);
-        jolt.check_ground(id);
-        
         /* controls here */     
-        controller.mouse_controls(window, deltaTime, !imGuiHovered);
+        controller.mouse_controls(window, deltaTime, !imGuiHovered, &inputDirection);       
+        pc.update(v(inputDirection), controller.cs.isJumping, deltaTime); // player controller
+        camera.moveTo(v(pc.position));
 
+        /* physics */
+        jolt.update(); // physics tick
+
+        shader_jolt.update_ssbo(0, jolt.matrices.size() * sizeof(mat4), jolt.matrices.data());
+        shader_bb.update_ssbo(0, pc.matrices.size() * sizeof(mat4), pc.matrices.data());
+        
         /* Render here */
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         shader_main.draw(camera, bo);
         shader_jolt.draw(camera, bo_jolt);
-        
+        shader_bb.draw(camera, bo_player);
+
         imgui.start_frame();
         imgui.demo(&imGuiHovered);
         imgui.rendering();
