@@ -76,17 +76,17 @@ bufferObject::~bufferObject()
 // Render Pool
 //
 // =======================================================================================
-renderPool::renderPool()
+RenderPool::RenderPool()
 {
     cout << "creating renderPool object..." << endl;
 }
 
-renderPool::~renderPool()
+RenderPool::~RenderPool()
 {
     cout << "deleting renderPool object..." << endl;
 }
 
-uint renderPool::getCount()
+uint RenderPool::getCount()
 {
     return count;
 }
@@ -96,7 +96,7 @@ uint renderPool::getCount()
 /// @param i 
 /// @param position 
 /// @return renderID / index that model information was inserted
-uint renderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
+uint RenderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
 {
     // rp.commands[i].count           = objects.object[i].indexCount;
     // rp.commands[i].instanceCount   = 1; // objects.object[i][i].instanceCount
@@ -124,7 +124,7 @@ uint renderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
 /// @param v vertex data
 /// @param i index data
 /// @return the index of insertsion
-uint renderPool::insert(vector<vertex> v, vector<uint> i)
+uint RenderPool::insert(vector<vertex> v, vector<uint> i)
 {
     // rp.commands[i].count           = objects.object[i].indexCount;
     // rp.commands[i].instanceCount   = 1; // objects.object[i][i].instanceCount

@@ -61,7 +61,7 @@ public:
     ~bufferObject();
 };
 
-class renderPool{
+class RenderPool{
 private:
     uint count = 0; // amount of objects in commands counting instances, increment needs to start at 0 else garbage
 public:
@@ -72,8 +72,8 @@ public:
 
     uint insert(vector<vertex> v, vector<uint> i, vec3 position);
     uint insert(vector<vertex> v, vector<uint> i);
-    renderPool();
-    ~renderPool();
+    RenderPool();
+    ~RenderPool();
 
     uint getCount();
 };

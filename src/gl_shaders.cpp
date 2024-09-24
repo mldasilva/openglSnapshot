@@ -153,7 +153,7 @@ void checkCompileErrors(unsigned int shader, std::string type)
 //     shader.update_ssbo(index, sizeof(mat4), &render.matrices[index]);
 // }
 
-void shader::draw(camera& camera, bufferObject& buffer)
+void shader::draw(Camera& camera, bufferObject& buffer)
 {
     // Use the shader program
     glUseProgram(id);
@@ -177,7 +177,7 @@ void shader::draw(camera& camera, bufferObject& buffer)
 }
 
 //CREATE_SHADER_BUFFER_STORAGE
-void shader::create_ssbo(uint binding, uint size, const void * data)
+void shader::create_ssbo(uint binding, uint size, const void* data)
 {
     if (data == NULL) 
     {
@@ -185,6 +185,8 @@ void shader::create_ssbo(uint binding, uint size, const void * data)
         throw std::runtime_error("!!ssbo data is empty!!!");
         return;
     }
+    ssbo_size.push_back(size); // used for updating
+    ssbo_data.push_back(data); // used for updating
     // cout << "creating ssbo..." << endl;
     // ssbo.push_back(0);
     // ssbo_map.push_back(0);
@@ -216,9 +218,9 @@ void shader::create_ssbo(uint binding, uint size, const void * data)
     ssboIndex++;
 }
 
-void shader::update_ssbo(uint index, uint size, const void *data)
+void shader::update_ssbo(uint index)
 {
-    memcpy(ssbo_map[index], data, size);
+    memcpy(ssbo_map[index], ssbo_data[index], ssbo_size[index]);
 }
 
 void shader::triangle_debug()

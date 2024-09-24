@@ -23,6 +23,9 @@ class shader{
 private:
     unordered_map<string, int> uniformLocationMap;
     uint ssboIndex; // keeping track of ssbo and sbbomap pushs
+
+    vector<const void*> ssbo_data; // pointers to data
+    vector<uint> ssbo_size;
 public:
     uint id;
     vector<uint> ssbo;
@@ -32,8 +35,8 @@ public:
     ~shader();
 
     void create_ssbo(uint binding, uint size, const void * data);
-    void update_ssbo(uint index, uint size, const void * data);
-    void draw(camera& camera, bufferObject& buffer);
+    void update_ssbo(uint index);
+    void draw(Camera& camera, bufferObject& buffer);
     void triangle_debug();
     void set_uniform_location(const char *name);
     int get_uniform_location(const char *name);

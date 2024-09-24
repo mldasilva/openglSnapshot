@@ -5,6 +5,7 @@
 
 #include "model.h"
 #include "render.h"
+#include "controller_interface.h"
 
 // The Jolt headers don't include Jolt.h. Always include Jolt.h before including any other Jolt header.
 // You can use Jolt.h in your precompiled header to speed up compilation.
@@ -325,7 +326,7 @@ enum objectType
     npc = 3
 };
 
-class joltWrapper
+class JoltWrapper
 {
 private:
 
@@ -408,15 +409,15 @@ public:
 
 	vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
 
-	joltWrapper();
-	~joltWrapper();
+	JoltWrapper();
+	~JoltWrapper();
 
 	void joltRegister();
 	void joltUnregister();
 	void update();
 	// void updateKinematic(BodyID inBody, Vec3 inPosition, float deltaTime);
 	// BodyInterface& get_interface();
-	BodyID create_object(renderPool& render, objectType inType, model &inModel, RVec3Arg inPosition, QuatArg inRot);
+	BodyID create_object(RenderPool& render, objectType inType, Model &inModel, RVec3Arg inPosition, QuatArg inRot);
 	BodyID create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation = Quat::sIdentity(), 
 		EMotionType inMotionType = EMotionType::Static, 
 		ObjectLayer inObjectLayer = Layers::NON_MOVING, 
@@ -425,17 +426,17 @@ public:
 	void optimize();
 };
 
-class playerController {
+class PlayerController {
 private:
 	// Ground detection threshold
 	const float cGroundDetectionThreshold 	= 0.0f;
-	const float cCapsuleHalfHeight 			= 1.0f;
-	const float cCapsuleRadius 				= 1.0f;
+	const float cHalfHeight 				= 1.33f;
+	const float cRadius 					= 1.33f;
 	const float cGravity 					= -20.0f;
 	const float cGravityFall 				= cGravity * 2.0f;
 	const float cMaxFallSpeed 				= -50.0f;
 
-	joltWrapper *pJolt;
+	JoltWrapper *pJolt;
 	
 public:
     BodyID bodyID;
@@ -446,13 +447,14 @@ public:
     float jumpForce 	= 12.0f;
 	float playerSpeed 	= 8;
 
+	vector<uint> textureIndices;
 
-	vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
+	// vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
 
-	playerController(renderPool& inRenderPool, joltWrapper *inJolt, model& inModel, Vec3 inPosition);
+	PlayerController(RenderPool& inRenderPool, JoltWrapper *inJolt, Vec3 inPosition);
 	bool cast_ray(Vec3 start, Vec3 end, float *outDepth);
 	Vec3 cast_shape(Vec3 inDirection, Vec3 inPosition);
-	void update(Vec3 inputDirection, bool inputJump, float deltaTime);
+	void update(ControllerInterface controllerInterface, float deltaTime);
 };
 
 void console_RMat44(const JPH::RMat44& mat);

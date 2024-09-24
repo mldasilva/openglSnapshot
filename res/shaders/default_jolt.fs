@@ -7,7 +7,7 @@
 //     uint textureIndices[];
 // };
 
-layout(std430, binding = 3) readonly buffer textureHandles {
+layout(std430, binding = 2) readonly buffer textureHandles {
     uint64_t handles[];
 };
 

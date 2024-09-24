@@ -60,6 +60,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     model
     Jolt
     jolt_wrapper
+    animator
 )
 
 # Define the resource path at configure time

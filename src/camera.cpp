@@ -1,6 +1,6 @@
 #include "camera.h"
 
-camera::camera(uint width, uint height)
+Camera::Camera(uint width, uint height)
 {
     cout << "creating camera object" << endl;
     zoom = 50.0f;
@@ -21,12 +21,12 @@ camera::camera(uint width, uint height)
     offset = position - target;
 }
 
-camera::~camera()
+Camera::~Camera()
 {
     cout << "deleting camera object" << endl;
 }
 
-void camera::rotate(float angleAddition)
+void Camera::rotate(float angleAddition)
 {
     // Calculate the direction vector from the camera position to the target
     glm::vec3 direction = position - target;
@@ -48,17 +48,17 @@ void camera::rotate(float angleAddition)
     offset = position - target;
 }
 
-void camera::move(vec3 translate)
+void Camera::move(vec3 translate)
 {
     target += translate;
     position += translate;
     view = glm::lookAt(position + translate, target + translate, up);
 }
 
-void camera::moveTo(vec3 target)
+void Camera::moveTo(vec3 target)
 {
-    camera::target = target;
-    camera::position = target + offset;
+    Camera::target = target;
+    Camera::position = target + offset;
 
     view = glm::lookAt(position, target, up);
 }

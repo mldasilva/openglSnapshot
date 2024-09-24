@@ -1,25 +1,25 @@
 #include "model.h"
 
-model::model(const char* file)
+Model::Model(const char* file)
 {
 	cout << "creating model object..." << endl;
     string text = get_file_contents(file);
     _json = json::parse(text);
 
 	// Get the binary data
-	model::filepath = file;
+	Model::filepath = file;
 	data = get_data();
 
 	loadMesh(0); // currently only loading first mesh in the gltf
 }
 
-model::~model()
+Model::~Model()
 {
 	cout << "deleting model object..." << endl;
 }
 
 // Reads a text file and outputs a string with everything in the text file
-string model::get_file_contents(const char* filename)
+string Model::get_file_contents(const char* filename)
 {
 	ifstream in(filename, ios::binary);
 	if (in)
@@ -38,7 +38,7 @@ string model::get_file_contents(const char* filename)
 
 //https://godotengine.org/article/we-should-all-use-gltf-20-export-3d-assets-game-engines/
 // gets bin file of gltf
-vector<uchar> model::get_data()
+vector<uchar> Model::get_data()
 {
     /*In glTF 2.0, a URI is a flexible way to reference external or embedded resources, allowing for efficient and organized handling of 3D assets. External URIs keep files modular, while data URIs allow for a self-contained glTF file.*/
 
@@ -57,7 +57,7 @@ vector<uchar> model::get_data()
 }
 
 //https://github.com/KhronosGroup/glTF/tree/main/specification/2.0
-vector<float> model::get_floats(json accessor)
+vector<float> Model::get_floats(json accessor)
 {
     vector<float> verts;
 
@@ -93,7 +93,7 @@ vector<float> model::get_floats(json accessor)
 	return verts;
 }
 
-vector<uint> model::get_indices(json accessor)
+vector<uint> Model::get_indices(json accessor)
 {
 	vector<uint> indices;
 
@@ -143,7 +143,7 @@ vector<uint> model::get_indices(json accessor)
 	return indices;
 }
 
-void model::loadMesh(uint indexMesh)
+void Model::loadMesh(uint indexMesh)
 {
 	// Get all accessor indices
 	uint posAccIndex 		= _json["meshes"][indexMesh]["primitives"][0]["attributes"]["POSITION"];
@@ -170,7 +170,7 @@ void model::loadMesh(uint indexMesh)
 	// meshes.push_back(Mesh(vertices, indices, textures));
 }
 
-vector<vertex> model::group_vecs_into_vertices(vector<vec3> positions, vector<vec3> normals, vector<vec2> texUVs)
+vector<vertex> Model::group_vecs_into_vertices(vector<vec3> positions, vector<vec3> normals, vector<vec2> texUVs)
 {
 	vector<vertex> vertices;
 	for (int i = 0; i < positions.size(); i++)
@@ -188,7 +188,7 @@ vector<vertex> model::group_vecs_into_vertices(vector<vec3> positions, vector<ve
 	return vertices;
 }
 
-vector<vec2> model::group_floats_into_vec2(vector<float> floatVec)
+vector<vec2> Model::group_floats_into_vec2(vector<float> floatVec)
 {
 	vector<vec2> vectors;
 	for (int i = 0; i < floatVec.size();)
@@ -199,7 +199,7 @@ vector<vec2> model::group_floats_into_vec2(vector<float> floatVec)
 	return vectors;
 }
 
-vector<vec3> model::group_floats_into_vec3(vector<float> floatVec)
+vector<vec3> Model::group_floats_into_vec3(vector<float> floatVec)
 {
 	vector<vec3> vectors;
 	for (int i = 0; i < floatVec.size();)
@@ -212,7 +212,7 @@ vector<vec3> model::group_floats_into_vec3(vector<float> floatVec)
 	return vectors;
 }
 
-vector<vec4> model::group_floats_into_vec4(vector<float> floatVec)
+vector<vec4> Model::group_floats_into_vec4(vector<float> floatVec)
 {
 	vector<vec4> vectors;
 	for (int i = 0; i < floatVec.size();)
@@ -223,7 +223,7 @@ vector<vec4> model::group_floats_into_vec4(vector<float> floatVec)
 	return vectors;
 }
 
-void model::cout_vertices()
+void Model::cout_vertices()
 {
 	for (size_t i = 0; i < vertices.size(); i++)
     {
@@ -233,7 +233,7 @@ void model::cout_vertices()
     }
 }
 
-void model::cout_indices()
+void Model::cout_indices()
 {
     for (size_t i = 0; i < indices.size(); i++)
     {
@@ -241,3 +241,53 @@ void model::cout_indices()
     }
 }
 
+Billboard::Billboard(float halfSize)
+{
+	// float vertexData[] = {
+    //     // positions          // colors           // texture coords
+    //     o,  o, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
+    //     o, -o, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
+    //     -o, -o, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
+    //     -o,  o, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
+    // };
+
+    // swapping order of indices draws the plane with the normal facing the camera 
+    // when the billboard shader is applied, so i no longer need to disable depth culling
+    // unsigned int indices[] = {  // note that we start from 0!
+    //     3,1,0,   // first triangle
+    //     3,2,1    // second triangle
+    // };
+
+	vertex ver;
+
+    indices.push_back(3);
+    indices.push_back(1);
+    indices.push_back(0);
+    indices.push_back(3);
+    indices.push_back(2);
+    indices.push_back(1);
+
+    ver.position = vec3(halfSize, halfSize, 0);
+    ver.normal = vec3(0,0,0);
+    ver.texUV = vec2(1.0, 1.0);
+
+    vertices.push_back(ver);
+
+    ver.position = vec3(halfSize, -halfSize, 0);
+    ver.normal = vec3(0,0,0);
+    ver.texUV = vec2(1.0, 0.0);
+
+    vertices.push_back(ver);
+
+    ver.position = vec3(-halfSize, -halfSize, 0);
+    ver.normal = vec3(0,0,0);
+    ver.texUV = vec2(0.0, 0.0);
+
+    vertices.push_back(ver);
+
+    ver.position = vec3(-halfSize, halfSize, 0);
+    ver.normal = vec3(0,0,0);
+    ver.texUV = vec2(0.0, 1.0);
+
+    vertices.push_back(ver);
+}

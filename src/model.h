@@ -14,7 +14,7 @@ using namespace std;
 using namespace nlohmann;
 using namespace glm;
 
-class model {
+class Model {
 private:
     const char* filepath;
     vector<uchar> data;
@@ -37,12 +37,18 @@ public:
     vector<vertex> vertices;
 	vector<uint> indices;
 
-    model(const char* file);
-    ~model();   
+    Model(const char* file);
+    ~Model();   
 
     void cout_vertices();
     void cout_indices(); 
 };
 
+class Billboard {
+public:
+    vector<vertex> vertices;
+	vector<uint> indices;
 
+    Billboard(float halfSize);
+};
 #endif

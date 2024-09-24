@@ -1,4 +1,13 @@
 # ==================================================
+# animator
+# ==================================================
+add_library(animator STATIC animator.cpp)
+
+target_include_directories(animator PUBLIC
+    ${CMAKE_SOURCE_DIR}/lib/glm
+)
+
+# ==================================================
 # camera
 # ==================================================
 add_library(camera STATIC camera.cpp)

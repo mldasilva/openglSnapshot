@@ -1,10 +1,9 @@
 #include "controller.h"
 
-void controller::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
+void Controller::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
 {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) 
     {
-        
         // Retrieve the application instance from the window's user pointer
         // camera* ptr = static_cast<camera*>(glfwGetWindowUserPointer(window));
         // if (ptr) {
@@ -12,11 +11,10 @@ void controller::cursor_position_callback(GLFWwindow* window, double xpos, doubl
         //     cout << ptr->position << endl;
         //     ptr->move(vec3(0.1f,0,0.1f));
         // }
-        
     }    
 }
 
-void controller::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+void Controller::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
     if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
     {
@@ -29,9 +27,9 @@ void controller::mouse_button_callback(GLFWwindow* window, int button, int actio
     }
 }
 
-void controller::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void Controller::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {   
-    controllerState* data = static_cast<controllerState*>(glfwGetWindowUserPointer(window));
+    ControllerInterface* data = static_cast<ControllerInterface*>(glfwGetWindowUserPointer(window));
     // action == GLFW_PRESS makes it only fire once on down stroke
     if(key == GLFW_KEY_ESCAPE)
     {
@@ -53,18 +51,18 @@ void controller::key_callback(GLFWwindow* window, int key, int scancode, int act
     }
 }
 
-void controller::framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void Controller::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     // make sure the viewport matches the new window dimensions; note that width and 
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
 
-void controller::window_position_callback(GLFWwindow* window, int xpos, int ypos) {
+void Controller::window_position_callback(GLFWwindow* window, int xpos, int ypos) {
     std::cout << "Window moved to position: (" << xpos << ", " << ypos << ")" << std::endl;
 }
 
-void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active, vec3 *outMouseDirection)
+void Controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active)
 {
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && active) 
     {
@@ -113,10 +111,8 @@ void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active
         // cout << intersectionPoint << endl;
         vec3 d = normalize(intersectionPoint - _camera->target);
         
-        *outMouseDirection = d;
-        // float speed = 6.0f;
-        // _camera->move(vec3(d.x * deltaTime * speed, 0 , d.z * deltaTime * speed));
-        // return d;
+        data->mouseDirection = d;
+
         return;
     }
 
@@ -125,19 +121,20 @@ void controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active
         _camera->rotate(2.0f);
     }
     // return vec3(0);
-    *outMouseDirection = vec3(0);
+    data->mouseDirection = vec3(0);
 }
 
-controller::controller(GLFWwindow *window, camera *camera)
+Controller::Controller(GLFWwindow *window, Camera *camera)
 {
     cout << "creating controller object..." << endl;
     // glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
     _camera = camera;
     
-    cs.isJumping = false;
+    interface.isJumping = false;
 
     // Set the user pointer to the camera instance
-    glfwSetWindowUserPointer(window, &cs);
+    glfwSetWindowUserPointer(window, &interface);
+    data = static_cast<ControllerInterface*>(glfwGetWindowUserPointer(window));
 
     // mouse position
     glfwSetCursorPosCallback(window, cursor_position_callback);
@@ -155,7 +152,7 @@ controller::controller(GLFWwindow *window, camera *camera)
     glfwSetWindowPosCallback(window, window_position_callback);
 }
 
-controller::~controller()
+Controller::~Controller()
 {
     cout << "deleting controller object..." << endl;
 }

@@ -1,6 +1,6 @@
 #include "jolt_wrapper.h"
 
-joltWrapper::joltWrapper()
+JoltWrapper::JoltWrapper()
 {
 	joltRegister(); // must be first
 
@@ -20,7 +20,7 @@ joltWrapper::joltWrapper()
 	interface = &ps.GetBodyInterface();
 }
 
-joltWrapper::~joltWrapper()
+JoltWrapper::~JoltWrapper()
 {
 	cout << "Deleteing jolt Wrapper.." << endl;
 	for (BodyID bodyID : bodyIDs)
@@ -34,7 +34,7 @@ joltWrapper::~joltWrapper()
 	joltUnregister();
 }
 
-void joltWrapper::joltRegister()
+void JoltWrapper::joltRegister()
 {
 	// Register allocation hook. In this example we'll just let Jolt use malloc / free but you can override these if you want (see Memory.h).
 	// This needs to be done before any other Jolt function is called.
@@ -54,7 +54,7 @@ void joltWrapper::joltRegister()
 	RegisterTypes();
 }
 
-void joltWrapper::joltUnregister()
+void JoltWrapper::joltUnregister()
 {
 	// Unregisters all types with the factory and cleans up the default material
 	UnregisterTypes();
@@ -65,7 +65,7 @@ void joltWrapper::joltUnregister()
 }
 
 
-void joltWrapper::update()
+void JoltWrapper::update()
 {
 	// Step the world
 	ps.Update(cDeltaTime, cCollisionSteps, temp_allocator_ptr, job_system_ptr);
@@ -133,7 +133,7 @@ void joltWrapper::update()
 //     return ps.GetBodyInterface();
 // }
 
-BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &inModel, RVec3Arg inPosition, QuatArg inRot)
+BodyID JoltWrapper::create_object(RenderPool& render, objectType inType, Model &inModel, RVec3Arg inPosition, QuatArg inRot)
 {
 	cout << " created object" << endl;
 	BodyID result;
@@ -155,7 +155,6 @@ BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &
             Layers::NON_MOVING, 
             EActivation::DontActivate
         );
-		
     }
     else if(inType == enviroment_dynamic)
     {
@@ -171,13 +170,14 @@ BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &
     }
     else if(inType == player)
     {
-        result = create_shape(
-            new CapsuleShape(2.0f, 1.0f), false, 
-            inPosition, Quat::sIdentity(),  
-            EMotionType::Kinematic, 
-            Layers::MOVING, 
-            EActivation::DontActivate
-        );
+		throw std::runtime_error("trying to make player");
+        // result = create_shape(
+        //     new CapsuleShape(2.0f, 1.0f), false, 
+        //     inPosition, Quat::sIdentity(),  
+        //     EMotionType::Kinematic, 
+        //     Layers::MOVING, 
+        //     EActivation::DontActivate
+        // );
     }
     else if(inType == npc)
     {
@@ -197,7 +197,7 @@ BodyID joltWrapper::create_object(renderPool& render, objectType inType, model &
 /// @param inObjectLayer 
 /// @param inActivation 
 /// @return 
-BodyID joltWrapper::create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation)
+BodyID JoltWrapper::create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation, EMotionType inMotionType, ObjectLayer inObjectLayer, EActivation inActivation)
 {
 	// inShape->SetEmbedded();
 	BodyCreationSettings settings(inShape, inPosition, inRotation, inMotionType, inObjectLayer);
@@ -218,7 +218,7 @@ BodyID joltWrapper::create_shape(const Shape *inShape, bool isSensor, RVec3Arg i
 	return b_id;
 }
 
-void joltWrapper::optimize()
+void JoltWrapper::optimize()
 {
 	// Optional step: Before starting the physics simulation you can optimize the broad phase. This improves collision detection performance (it's pointless here because we only have 2 bodies).
 	// You should definitely not call this every frame or when e.g. streaming in a new level section as it is an expensive operation.
@@ -226,19 +226,22 @@ void joltWrapper::optimize()
 	ps.OptimizeBroadPhase();
 }
 
-playerController::playerController(renderPool& inRenderPool, joltWrapper *inJolt, model& inModel, Vec3 inPosition)
+PlayerController::PlayerController(RenderPool& inRenderPool, JoltWrapper *inJolt, Vec3 inPosition)
 {
 	pJolt = inJolt;
 	position = inPosition;
 
-	// bodyID = pJolt->create_object(inRenderPool, player, inModel, inPosition, Quat::sIdentity());
+	textureIndices.push_back(0); // every billboard will need a texture index
 	
+	Billboard billboard(1);
+    inRenderPool.insert(billboard.vertices, billboard.indices);
+
 	// breaking out create object for player so we can control capsule shape 
 	// without changing creat object parameters
-	inRenderPool.insert(inModel.vertices, inModel.indices);
+	// inRenderPool.insert(inModel.vertices, inModel.indices);
 	// pJolt->matrices.push_back(RMat44::sRotationTranslation(Quat::sIdentity(), inPosition));
 	bodyID = pJolt->create_shape(
-		new CapsuleShape(cCapsuleHalfHeight, cCapsuleRadius), false, 
+		new SphereShape(cRadius), false, 
 		inPosition, Quat::sIdentity(),  
 		EMotionType::Kinematic, 
 		Layers::MOVING, 
@@ -250,10 +253,10 @@ playerController::playerController(renderPool& inRenderPool, joltWrapper *inJolt
 	// pJolt->bodyIDs.push_back(bodyID);
 
 	// Create an identity matrix (no rotation, no translation)
-	matrices.push_back(Mat44::sTranslation(inPosition));
+	// matrices.push_back(Mat44::sTranslation(inPosition));
 }
 
-bool playerController::cast_ray(Vec3 start, Vec3 end, float *outDepth)
+bool PlayerController::cast_ray(Vec3 start, Vec3 end, float *outDepth)
 {
 	// 	SpecifiedBroadPhaseLayerFilter(BroadPhaseLayers::NON_MOVING):
 	//     This filter is checking against a specific broad phase layer. In your case, it's BroadPhaseLayers::NON_MOVING, which likely refers to static objects like the ground or other immovable entities.
@@ -293,7 +296,7 @@ bool playerController::cast_ray(Vec3 start, Vec3 end, float *outDepth)
     }
 }
 
-Vec3 playerController::cast_shape(Vec3 inDirection, Vec3 inPosition)
+Vec3 PlayerController::cast_shape(Vec3 inDirection, Vec3 inPosition)
 {
     Vec3 result = Vec3::sZero();
 
@@ -333,7 +336,7 @@ Vec3 playerController::cast_shape(Vec3 inDirection, Vec3 inPosition)
                     // cout << "  Contact Point on Shape1: " << hitResult.mContactPointOn1 << endl;
                     // cout << "  Contact Point on Shape2: " << hitResult.mContactPointOn2 << endl;
 
-					Vec3 horizontal = Vec3(hitResult.mPenetrationAxis.GetX(), 0, hitResult.mPenetrationAxis.GetZ());
+					// Vec3 horizontal = Vec3(hitResult.mPenetrationAxis.GetX(), 0, hitResult.mPenetrationAxis.GetZ());
                     result += hitResult.mPenetrationDepth * hitResult.mPenetrationAxis.Normalized();
                 }
             }
@@ -344,14 +347,13 @@ Vec3 playerController::cast_shape(Vec3 inDirection, Vec3 inPosition)
 }
 
 
-void playerController::update(Vec3 inputDirection, bool inputJump, float deltaTime)
+void PlayerController::update(ControllerInterface controllerInterface, float deltaTime)
 {
-	
 	// Get player position and adjust for capsule height
 	// Adjust this based on your player capsule's half-height
 
 	// Start at player's feet
-    Vec3 start = position - Vec3(0.0f, cCapsuleHalfHeight, 0.0f);  
+    Vec3 start = position - Vec3(0.0f, cHalfHeight, 0.0f);  
     Vec3 end = start + Vec3(0.0f, -0.01f, 0.0f);
 	
 	isGrounded = cast_ray(start, end, nullptr);
@@ -360,15 +362,14 @@ void playerController::update(Vec3 inputDirection, bool inputJump, float deltaTi
 	{
 		// Reset vertical velocity when grounded
 		velocity.SetY(0.0f);
-		position.SetY(1.0f);
 
 		// Handle jumping input (e.g., space bar)
-		if (inputJump) {
+		if (controllerInterface.isJumping) {
 			velocity.SetY(jumpForce);  // Apply jump force
 		}
 
-		velocity.SetX(inputDirection.GetX() * playerSpeed);
-		velocity.SetZ(inputDirection.GetZ() * playerSpeed);
+		velocity.SetX(controllerInterface.mouseDirection.x * playerSpeed);
+		velocity.SetZ(controllerInterface.mouseDirection.z * playerSpeed);
 	} 
 	else 
 	{
@@ -396,7 +397,7 @@ void playerController::update(Vec3 inputDirection, bool inputJump, float deltaTi
 	pJolt->interface->MoveKinematic(bodyID, position, Quat::sIdentity(), deltaTime);
 	
 	// temp need to update matrices
-	matrices[0] = Mat44::sTranslation(position);
+	// matrices[0] = Mat44::sTranslation(position);
 
 }
 

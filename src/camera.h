@@ -3,7 +3,7 @@
 
 #include "glmath.h"
 
-class camera{
+class Camera{
 public:
     vec3 position;
     vec3 target;
@@ -18,8 +18,8 @@ public:
     int rotation;
     float radius; // used for rotation;
 
-    camera(uint width, uint height);
-    ~camera();
+    Camera(uint width, uint height);
+    ~Camera();
     
     void rotate(float angleAddition);
     void move(vec3 translate);
