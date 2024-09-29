@@ -1,12 +1,10 @@
 #version 460 core
 
 // //ssbo
+// offset expects a 16 byte offset between elements, so even tho vec3 is all we use vec4
 layout(std430, binding = 4) readonly buffer InstanceMatricies {
-    vec3 instancedMatrix;
+    vec4 instancedMatrix[];
 };
-// layout(std430, binding = 1) buffer ObjectIDS {
-//     uint objectID[];
-// };
 
 // inputs
 layout(location = 0) in vec3 Position;
@@ -21,7 +19,7 @@ layout(location = 0) out vec2 out_texCoord;
 layout(location = 1) out flat uint out_textureID;
 
 vec2 billboardSize = vec2(1.25,1.25);
-vec3 billboardPos = vec3(0,3,0);
+// vec3 billboardPos = vec3(0,3,0);
 
 void main()
 {
@@ -33,7 +31,7 @@ void main()
     vec3 u_cameraUp_worldspace      = vec3(u_view[0][1], u_view[1][1], u_view[2][1]);
 
     // this becomes the position
-    vec3 vertexPosition_worldspace = instancedMatrix 
+    vec3 vertexPosition_worldspace = instancedMatrix[gl_InstanceID + gl_BaseInstance].xyz
     + u_cameraRight_worldspace * Position.x * billboardSize.x 
     + u_cameraUp_worldspace * Position.y * billboardSize.y;
 

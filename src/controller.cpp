@@ -29,7 +29,7 @@ void Controller::mouse_button_callback(GLFWwindow* window, int button, int actio
 
 void Controller::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {   
-    ControllerInterface* data = static_cast<ControllerInterface*>(glfwGetWindowUserPointer(window));
+    controllerI* data = static_cast<controllerI*>(glfwGetWindowUserPointer(window));
     // action == GLFW_PRESS makes it only fire once on down stroke
     if(key == GLFW_KEY_ESCAPE)
     {
@@ -134,7 +134,7 @@ Controller::Controller(GLFWwindow *window, Camera *camera)
 
     // Set the user pointer to the camera instance
     glfwSetWindowUserPointer(window, &interface);
-    data = static_cast<ControllerInterface*>(glfwGetWindowUserPointer(window));
+    data = static_cast<controllerI*>(glfwGetWindowUserPointer(window));
 
     // mouse position
     glfwSetCursorPosCallback(window, cursor_position_callback);

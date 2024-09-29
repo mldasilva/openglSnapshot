@@ -9,6 +9,7 @@
 #include <json.h>
 #include "glmath.h"
 #include "typedef.h"
+#include "model_interface.h"
 
 using namespace std;
 using namespace nlohmann;
@@ -32,14 +33,18 @@ private:
     vector<vertex> group_vecs_into_vertices(vector<vec3> positions,vector<vec3> normals,vector<vec2> texUVs);
 
     void loadMesh(uint indexMesh);
+
+    // ModelInterface data;
 public:
     json _json;
     vector<vertex> vertices;
 	vector<uint> indices;
 
+    
     Model(const char* file);
     ~Model();   
 
+    modelI getInterface();
     void cout_vertices();
     void cout_indices(); 
 };
@@ -50,5 +55,7 @@ public:
 	vector<uint> indices;
 
     Billboard(float halfSize);
+
+    modelI getInterface();
 };
 #endif

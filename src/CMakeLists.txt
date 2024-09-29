@@ -84,7 +84,7 @@ add_library(jolt_wrapper STATIC jolt_wrapper.cpp)
 target_include_directories(jolt_wrapper PUBLIC
     ${CMAKE_SOURCE_DIR}/lib/jolt/
     ${CMAKE_SOURCE_DIR}/lib/glm
-    ${CMAKE_SOURCE_DIR}/lib/json
+    # ${CMAKE_SOURCE_DIR}/lib/json
     ${CMAKE_SOURCE_DIR}/lib
 )
 

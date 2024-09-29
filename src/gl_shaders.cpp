@@ -27,7 +27,7 @@ std::string LoadFileToString(const std::string& filePath) {
     return buffer.str();
 }
 
-shader::shader(const char* vertexPath, const char* fragmentPath)
+DaSilva::Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
     cout << "creating shader object..." << endl;
 
@@ -71,7 +71,7 @@ shader::shader(const char* vertexPath, const char* fragmentPath)
     // }
     // catch (ifstream::failure& e)
     // {
-    //     cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << endl;
+    //     cout << "ERROR::Managers::Managers::Managers::Shader::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << endl;
     // }
 
     const char* vShaderCode = vertexCode.c_str();
@@ -108,7 +108,7 @@ shader::shader(const char* vertexPath, const char* fragmentPath)
     glDeleteShader(fragment);
 }
 
-shader::~shader()
+DaSilva::Shader::~Shader()
 {
     cout << "deleting shader object" << endl;
 
@@ -123,7 +123,7 @@ shader::~shader()
     // ssbo_map not required? doesnt use a glGenFunction
 }
 
-void checkCompileErrors(unsigned int shader, std::string type)
+void DaSilva::checkCompileErrors(unsigned int shader, std::string type)
 {
     int success;
     char infoLog[1024];
@@ -153,7 +153,7 @@ void checkCompileErrors(unsigned int shader, std::string type)
 //     shader.update_ssbo(index, sizeof(mat4), &render.matrices[index]);
 // }
 
-void shader::draw(Camera& camera, bufferObject& buffer)
+void DaSilva::Shader::draw(Camera& camera, BufferObject& buffer)
 {
     // Use the shader program
     glUseProgram(id);
@@ -177,7 +177,7 @@ void shader::draw(Camera& camera, bufferObject& buffer)
 }
 
 //CREATE_SHADER_BUFFER_STORAGE
-void shader::create_ssbo(uint binding, uint size, const void* data)
+void DaSilva::Shader::create_ssbo(uint binding, uint size, const void* data)
 {
     if (data == NULL) 
     {
@@ -218,12 +218,12 @@ void shader::create_ssbo(uint binding, uint size, const void* data)
     ssboIndex++;
 }
 
-void shader::update_ssbo(uint index)
+void DaSilva::Shader::update_ssbo(uint index)
 {
     memcpy(ssbo_map[index], ssbo_data[index], ssbo_size[index]);
 }
 
-void shader::triangle_debug()
+void DaSilva::Shader::triangle_debug()
 {
     glUseProgram(0);
     glBegin(GL_TRIANGLES);
@@ -233,13 +233,13 @@ void shader::triangle_debug()
     glEnd();
 }
 
-void shader::set_uniform_location(const char *name)
+void DaSilva::Shader::set_uniform_location(const char *name)
 {
     int location = glGetUniformLocation(id, name);
     uniformLocationMap[name] = location;
 }
 
-int shader::get_uniform_location(const char *name)
+int DaSilva::Shader::get_uniform_location(const char *name)
 {
     if(uniformLocationMap.find(name) != uniformLocationMap.end())
     {
@@ -258,14 +258,14 @@ int shader::get_uniform_location(const char *name)
 //
 // =======================================================================================
 
-texture::texture()
+DaSilva::Texture::Texture()
 {
     cout << "creating texture object..." << endl;
     textureAddrIndex = 0;
     bindless_index = 0;
 }
 
-texture::~texture()
+DaSilva::Texture::~Texture()
 {
     for(const uint& id : textureAddress) 
     {
@@ -280,7 +280,7 @@ texture::~texture()
 /// @param _textureAddr_ Specifies an address (array) in which the generated texture names are stored.
 /// @param _textureSlot_ Specifies which texture unit to make active. The number of texture units is implementation dependent, but must be at least 80
 /// @param _filepath____ stbi_load filepath of the texture
-void texture::loadTexture(const char * filepath, uint textureSlot)
+void DaSilva::Texture::loadTexture(const char * filepath, uint textureSlot)
 {
     textureAddress.push_back(0);
     cout << "loaded texture into address: " << textureAddrIndex << endl;
@@ -323,7 +323,7 @@ void texture::loadTexture(const char * filepath, uint textureSlot)
 /// @param textures 
 /// @param textureHandle 
 /// @param filepath 
-void texture::loadTexture(const char * filepath)
+void DaSilva::Texture::loadTexture(const char * filepath)
 {
     //load and create a texture 
     //-------------------------
@@ -365,12 +365,12 @@ void texture::loadTexture(const char * filepath)
     bindless_index++;
 }
 
-GLuint64 *texture::handles()
+GLuint64 *DaSilva::Texture::getBufferData()
 {
     return bindless_texture_handles.data();
 }
 
-uint texture::handleByteSize()
+uint DaSilva::Texture::getBufferSize()
 {
     return bindless_texture_handles.size() * sizeof(GLuint64);
 }

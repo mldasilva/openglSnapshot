@@ -223,6 +223,16 @@ vector<vec4> Model::group_floats_into_vec4(vector<float> floatVec)
 	return vectors;
 }
 
+modelI Model::getInterface()
+{
+	modelI data;
+
+	data.vertices = vertices;
+	data.indices = indices;
+
+    return data;
+}
+
 void Model::cout_vertices()
 {
 	for (size_t i = 0; i < vertices.size(); i++)

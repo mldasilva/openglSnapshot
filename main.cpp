@@ -1,8 +1,10 @@
 #include "main.h"
 // #include "glmath.h"
 
+#include "model.h"
 #include "controller.h"
 #include "animator.h"
+#include "scene.h"
 #include "gl_shaders.h"
 #include "jolt_wrapper.h"
 #include "imGui_wrapper.h"
@@ -73,14 +75,14 @@ int main(void)
     Controller      controller(window, &camera);    // after camera
     imGui_wrapper   imgui(window);                  // after controller
 
-    shader          shader_main(shader_default_vs, shader_default_fs);
-    RenderPool      render_main;
+    DaSilva::Shader          shader_main(shader_default_vs, shader_default_fs);
+    DaSilva::RenderPool      render_main;
 
-    shader          shader_jolt(shader_jolt_vs, shader_jolt_fs);
-    RenderPool      render_jolt;
+    DaSilva::Shader          shader_jolt(shader_jolt_vs, shader_jolt_fs);
+    DaSilva::RenderPool      render_jolt;
 
-    shader          shader_bb(shader_bb_vs, shader_bb_fs);
-    RenderPool      render_bb;
+    DaSilva::Shader          shader_bilb(shader_bb_vs, shader_bb_fs);
+    DaSilva::RenderPool      render_bilb;
 
     JoltWrapper     jolt; // Now we can create the actual physics system.
 
@@ -96,17 +98,14 @@ int main(void)
     for (size_t i = 0; i < 10; i++)
     {
         /* code */
-        jolt.create_object(render_jolt, enviroment_dynamic, cube, Vec3((i*2), 5, 0), Quat::sIdentity());
+        jolt.create_object(render_jolt, enviroment_dynamic, cube.getInterface(), Vec3((i*2), 5, 0), Quat::sIdentity());
     }
       
     // floor
     BodyID floor = jolt.create_shape(new BoxShape(Vec3(100.0f, 1.0f, 100.0f)), false, Vec3(0.0, -1.0, 0.0));
 
-    jolt.create_object(render_jolt, enviroment_static, cube, Vec3(3, 1, 3), Quat::sIdentity());
-    jolt.create_object(render_jolt, enviroment_static, cube, Vec3(0.5f, 1, 3), Quat::sIdentity());
-    
-    // create player
-    PlayerController playerController(render_bb, &jolt, Vec3(-3.0f,10.0f,0.0f));
+    jolt.create_object(render_jolt, enviroment_static, cube.getInterface(), Vec3(3, 1, 3), Quat::sIdentity());
+    jolt.create_object(render_jolt, enviroment_static, cube.getInterface(), Vec3(0.5f, 1, 3), Quat::sIdentity());
     
     // add floor to joly body filter
     MyBodyFilter floorFilter(floor);
@@ -116,9 +115,9 @@ int main(void)
     // textures
     // ===============================================================
     
-    texture textures;
-    textures.loadTexture(texture_anim_00);
-    textures.loadTexture(texture_dice);
+    DaSilva::Texture textures;
+    textures.loadTexture(texture_anim_00);  // texture index 0
+    textures.loadTexture(texture_dice);     // texture index 1
 
     // ===============================================================
     // blending settings
@@ -131,30 +130,43 @@ int main(void)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // ===============================================================
+    // animator & scene & player controller
+    // ===============================================================
+    
+    Animator animator;
+    animator.addAnimation("hello", 0, 9, 81, 0.25f, true);
+    animator.addAnimation("hello1", 0, 9, 81, 3.0f, true);
+    
+    Scene scene;
+    scene.add("player1", vec3(-3.0f,10.0f,0.0f));
+    scene.add("enemy01", vec3(-3.0f,10.0f,5.0f));
+    scene.add("enemy02", vec3(15.0f,10.0f,0.0f));
+    
+    Billboard billboard(1);
+    render_bilb.insert(billboard.vertices, billboard.indices, 10);
+
+    // create player controller
+    PlayerController playerController(&jolt, v(scene.fetch("player1")));
+
+    // ===============================================================
     // finalizing before scene
     // ===============================================================
     // jolt optimize shader ssbo creation and bufferObject must be after object creation,
-
+    
 	jolt.optimize();
 
-    shader_main.create_ssbo(0, render_main.matrices.size() * sizeof(mat4), render_main.matrices.data());
-    shader_main.create_ssbo(2, textures.handleByteSize(), textures.handles());
-    bufferObject bo(render_main.vertices, 8, render_main.indices, render_main.commands);
+    shader_main.    create_ssbo(0, render_main.getBufferSize(), render_main.getBufferData());
+    shader_main.    create_ssbo(2, textures.getBufferSize(),    textures.getBufferData());
+    BufferObject    bo_main(render_main);
 
-    shader_jolt.create_ssbo(1, jolt.matrices.size() * sizeof(mat4), jolt.matrices.data());
-    bufferObject bo_jolt(render_jolt.vertices, 8, render_jolt.indices, render_jolt.commands);
+    shader_jolt.    create_ssbo(1, jolt.getBufferSize(),        jolt.getBufferData());
+    BufferObject    bo_jolt(render_jolt);
 
-    shader_bb.create_ssbo(4, sizeof(Vec4), &playerController.position);
-    shader_bb.create_ssbo(6, playerController.textureIndices.size() * sizeof(uint), playerController.textureIndices.data());
-    bufferObject bo_player(render_bb.vertices, 8, render_bb.indices, render_bb.commands);
+    shader_bilb.    create_ssbo(4, scene.getBufferSize(),       scene.getBufferData());
+    shader_bilb.    create_ssbo(7, animator.getBufferSize(),    animator.getBufferData());
+    BufferObject    bo_player(render_bilb);
 
     std::cout << "hello world.." << std::endl;
-
-    // ===============================================================
-    // animator
-    // ===============================================================
-
-    Animator animator;
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -163,28 +175,28 @@ int main(void)
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTick;
 
-        // cout << deltaTime << endl;
-        // cout << controller.interface.mouseDirection << endl;
-
         /* controls here */     
-        controller.mouse_controls(window, deltaTime, !imGuiHovered);       
-        playerController.update(controller.interface, deltaTime); // player controller
-        camera.moveTo(v(playerController.position));
+        controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
+        playerController.   update(controller.interface, deltaTime); // player controller
+        camera.             moveTo(v(playerController.position));
 
+        scene.update(0, v(playerController.position)); // update the first billboard
+        
         /* physics */
         jolt.update(); // physics tick
+        animator.update(vec3(0), deltaTime);
 
         shader_jolt.update_ssbo(0); // matrices
-        shader_bb.update_ssbo(0);   // vec3 positions
-        shader_bb.update_ssbo(1);   // textures indices
+        shader_bilb.update_ssbo(0);   // vec3 positions
+        shader_bilb.update_ssbo(1);   // animations indices
 
         /* Render here */
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        shader_main.draw(camera, bo);       // render only insert into render
+        shader_main.draw(camera, bo_main);       // render only insert into render
         shader_jolt.draw(camera, bo_jolt);  // physics objects
-        shader_bb.draw(camera, bo_player);  // billboards
+        shader_bilb.draw(camera, bo_player);  // billboards
 
         imgui.start_frame();
         imgui.demo(&imGuiHovered);

@@ -15,12 +15,12 @@ private:
     void static framebuffer_size_callback(GLFWwindow* window, int width, int height);
     void static window_position_callback(GLFWwindow* window, int xpos, int ypos);
 
-    ControllerInterface* data;
+    controllerI* data;
 public:
     Controller(GLFWwindow *window, Camera *camera);
     ~Controller();
     
-    ControllerInterface interface;
+    controllerI interface;
 
     void mouse_controls(GLFWwindow *pWindow, float deltaTime, bool active);
 };

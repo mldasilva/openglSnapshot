@@ -1,7 +1,7 @@
 #pragma once
 #include "glmath.h"
 
-struct ControllerInterface{
+struct controllerI{
     vec3 mouseDirection;
     bool isJumping;
 };

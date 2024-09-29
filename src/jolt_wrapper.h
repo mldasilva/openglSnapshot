@@ -3,9 +3,11 @@
 // SPDX-License-Identifier: MIT
 #pragma once
 
-#include "model.h"
-#include "render.h"
+// #include "model.h"
+#include "model_interface.h"
 #include "controller_interface.h"
+#include "render.h"
+
 
 // The Jolt headers don't include Jolt.h. Always include Jolt.h before including any other Jolt header.
 // You can use Jolt.h in your precompiled header to speed up compilation.
@@ -45,6 +47,8 @@ using namespace JPH::literals;
 
 // We're also using STL classes in this example
 using namespace std;
+
+using namespace DaSilva;
 
 // Callback for traces, connect this to your own trace function if you have one
 static void TraceImpl(const char *inFMT, ...)
@@ -88,20 +92,20 @@ namespace Layers
 /// Class that determines if two object layers can collide
 class ObjectLayerPairFilterImpl : public ObjectLayerPairFilter
 {
-public:
-	virtual bool ShouldCollide(ObjectLayer inObject1, ObjectLayer inObject2) const override
-	{
-		switch (inObject1)
+	public:
+		virtual bool ShouldCollide(ObjectLayer inObject1, ObjectLayer inObject2) const override
 		{
-		case Layers::NON_MOVING:
-			return inObject2 == Layers::MOVING; // Non moving only collides with moving
-		case Layers::MOVING:
-			return true; // Moving collides with everything
-		default:
-			JPH_ASSERT(false);
-			return false;
+			switch (inObject1)
+			{
+			case Layers::NON_MOVING:
+				return inObject2 == Layers::MOVING; // Non moving only collides with moving
+			case Layers::MOVING:
+				return true; // Moving collides with everything
+			default:
+				JPH_ASSERT(false);
+				return false;
+			}
 		}
-	}
 };
 
 // Each broadphase layer results in a separate bounding volume tree in the broad phase. You at least want to have
@@ -120,203 +124,160 @@ namespace BroadPhaseLayers
 // This defines a mapping between object and broadphase layers.
 class BPLayerInterfaceImpl final : public BroadPhaseLayerInterface
 {
-public:
-	BPLayerInterfaceImpl()
-	{
-		// Create a mapping table from object to broad phase layer
-		mObjectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
-		mObjectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
-	}
-
-	virtual uint GetNumBroadPhaseLayers() const override
-	{
-		return BroadPhaseLayers::NUM_LAYERS;
-	}
-
-	virtual BroadPhaseLayer GetBroadPhaseLayer(ObjectLayer inLayer) const override
-	{
-		JPH_ASSERT(inLayer < Layers::NUM_LAYERS);
-		return mObjectToBroadPhase[inLayer];
-	}
-
-#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
-	virtual const char *			GetBroadPhaseLayerName(BroadPhaseLayer inLayer) const override
-	{
-		switch ((BroadPhaseLayer::Type)inLayer)
+	public:
+		BPLayerInterfaceImpl()
 		{
-		case (BroadPhaseLayer::Type)BroadPhaseLayers::NON_MOVING:	return "NON_MOVING";
-		case (BroadPhaseLayer::Type)BroadPhaseLayers::MOVING:		return "MOVING";
-		default:													JPH_ASSERT(false); return "INVALID";
+			// Create a mapping table from object to broad phase layer
+			mObjectToBroadPhase[Layers::NON_MOVING] = BroadPhaseLayers::NON_MOVING;
+			mObjectToBroadPhase[Layers::MOVING] = BroadPhaseLayers::MOVING;
 		}
-	}
-#endif // JPH_EXTERNAL_PROFILE || JPH_PROFILE_ENABLED
 
-private:
-	BroadPhaseLayer mObjectToBroadPhase[Layers::NUM_LAYERS];
+		virtual uint GetNumBroadPhaseLayers() const override
+		{
+			return BroadPhaseLayers::NUM_LAYERS;
+		}
+
+		virtual BroadPhaseLayer GetBroadPhaseLayer(ObjectLayer inLayer) const override
+		{
+			JPH_ASSERT(inLayer < Layers::NUM_LAYERS);
+			return mObjectToBroadPhase[inLayer];
+		}
+
+	#if defined(JPH_EXTERNAL_PROFILE) || defined(JPH_PROFILE_ENABLED)
+		virtual const char *			GetBroadPhaseLayerName(BroadPhaseLayer inLayer) const override
+		{
+			switch ((BroadPhaseLayer::Type)inLayer)
+			{
+			case (BroadPhaseLayer::Type)BroadPhaseLayers::NON_MOVING:	return "NON_MOVING";
+			case (BroadPhaseLayer::Type)BroadPhaseLayers::MOVING:		return "MOVING";
+			default:													JPH_ASSERT(false); return "INVALID";
+			}
+		}
+	#endif // JPH_EXTERNAL_PROFILE || JPH_PROFILE_ENABLED
+
+	private:
+		BroadPhaseLayer mObjectToBroadPhase[Layers::NUM_LAYERS];
 };
 
 /// Class that determines if an object layer can collide with a broadphase layer
 class ObjectVsBroadPhaseLayerFilterImpl : public ObjectVsBroadPhaseLayerFilter
 {
-public:
-	virtual bool ShouldCollide(ObjectLayer inLayer1, BroadPhaseLayer inLayer2) const override
-	{
-		switch (inLayer1)
+	public:
+		virtual bool ShouldCollide(ObjectLayer inLayer1, BroadPhaseLayer inLayer2) const override
 		{
-		case Layers::NON_MOVING:
-			return inLayer2 == BroadPhaseLayers::MOVING;
-		case Layers::MOVING:
-			return true;
-		default:
-			JPH_ASSERT(false);
-			return false;
+			switch (inLayer1)
+			{
+			case Layers::NON_MOVING:
+				return inLayer2 == BroadPhaseLayers::MOVING;
+			case Layers::MOVING:
+				return true;
+			default:
+				JPH_ASSERT(false);
+				return false;
+			}
 		}
-	}
 };
 
 // An example contact listener
 class MyContactListener : public ContactListener
 {
-public:
-	// See: ContactListener
-	virtual ValidateResult	OnContactValidate(const Body &inBody1, const Body &inBody2, RVec3Arg inBaseOffset, const CollideShapeResult &inCollisionResult) override
-	{
-		// cout << "Contact validate callback" << endl;
+	public:
+		// See: ContactListener
+		virtual ValidateResult	OnContactValidate(const Body &inBody1, const Body &inBody2, RVec3Arg inBaseOffset, const CollideShapeResult &inCollisionResult) override
+		{
+			// cout << "Contact validate callback" << endl;
 
-		// Allows you to ignore a contact before it is created (using layers to not make objects collide is cheaper!)
-		return ValidateResult::AcceptAllContactsForThisBodyPair;
-	}
+			// Allows you to ignore a contact before it is created (using layers to not make objects collide is cheaper!)
+			return ValidateResult::AcceptAllContactsForThisBodyPair;
+		}
 
-	virtual void OnContactAdded(const Body &inBody1, const Body &inBody2, const ContactManifold &inManifold, ContactSettings &ioSettings) override
-	{
-		// cout << "A contact was added" << endl;
-	}
+		virtual void OnContactAdded(const Body &inBody1, const Body &inBody2, const ContactManifold &inManifold, ContactSettings &ioSettings) override
+		{
+			// cout << "A contact was added" << endl;
+		}
 
-	virtual void OnContactPersisted(const Body &inBody1, const Body &inBody2, const ContactManifold &inManifold, ContactSettings &ioSettings) override
-	{
-		// cout << "A contact was persisted" << endl;
-	}
+		virtual void OnContactPersisted(const Body &inBody1, const Body &inBody2, const ContactManifold &inManifold, ContactSettings &ioSettings) override
+		{
+			// cout << "A contact was persisted" << endl;
+		}
 
-	virtual void OnContactRemoved(const SubShapeIDPair &inSubShapePair) override
-	{
-		// cout << "A contact was removed" << endl;
-	}
+		virtual void OnContactRemoved(const SubShapeIDPair &inSubShapePair) override
+		{
+			// cout << "A contact was removed" << endl;
+		}
 };
 
 // An example activation listener
 class MyBodyActivationListener : public BodyActivationListener
 {
-public:
-	virtual void OnBodyActivated(const BodyID &inBodyID, uint64 inBodyUserData) override
-	{
-		// cout << "A body got activated" << endl;
-	}
+	public:
+		virtual void OnBodyActivated(const BodyID &inBodyID, uint64 inBodyUserData) override
+		{
+			// cout << "A body got activated" << endl;
+		}
 
-	virtual void OnBodyDeactivated(const BodyID &inBodyID, uint64 inBodyUserData) override
-	{
-		// cout << "A body went to sleep" << endl;
-	}
+		virtual void OnBodyDeactivated(const BodyID &inBodyID, uint64 inBodyUserData) override
+		{
+			// cout << "A body went to sleep" << endl;
+		}
 };
 
 class MyCastShapeCollector : public CastShapeCollector {
-public:
-    // Constructor
-    MyCastShapeCollector() : CastShapeCollector() {}
+	public:
+		// Constructor
+		MyCastShapeCollector() : CastShapeCollector() {}
 
-    // Store hit results when a hit is found
-    virtual void AddHit(const ResultType &inResult) override {
-        // Store the hit
-        mHits.push_back(inResult);
+		// Store hit results when a hit is found
+		virtual void AddHit(const ResultType &inResult) override {
+			// Store the hit
+			mHits.push_back(inResult);
 
-        // Update the early out fraction
-        UpdateEarlyOutFraction(inResult.mFraction);
-		mHasHits = true;  // Mark that we have recorded a hit
-    }
+			// Update the early out fraction
+			UpdateEarlyOutFraction(inResult.mFraction);
+			mHasHits = true;  // Mark that we have recorded a hit
+		}
 
-    // Function to retrieve all the hits
-    const std::vector<ResultType>& GetHits() const {
-        return mHits;
-    }
+		// Function to retrieve all the hits
+		const std::vector<ResultType>& GetHits() const {
+			return mHits;
+		}
 
-    // Function to get the earliest hit fraction
-    float GetHitFraction() const {
-        return !mHits.empty() ? mHits.front().mFraction : FLT_MAX;
-    }
+		// Function to get the earliest hit fraction
+		float GetHitFraction() const {
+			return !mHits.empty() ? mHits.front().mFraction : FLT_MAX;
+		}
 
-    // Get the penetration depth of the first hit
-    float GetPenetrationDepth() const {
-        return !mHits.empty() ? mHits.front().mPenetrationDepth : 0.0f;
-    }
+		// Get the penetration depth of the first hit
+		float GetPenetrationDepth() const {
+			return !mHits.empty() ? mHits.front().mPenetrationDepth : 0.0f;
+		}
 
-	// Check if we have any hits
-    bool HasHits() const {
-        return mHasHits;
-    }
-	std::vector<ResultType> mHits;  // Store all hits
-private:
-    
-	bool mHasHits = false;  // Track whether any hits were recorded
+		// Check if we have any hits
+		bool HasHits() const {
+			return mHasHits;
+		}
+		std::vector<ResultType> mHits;  // Store all hits
+	private:
+		
+		bool mHasHits = false;  // Track whether any hits were recorded
 };
 
 class MyBodyFilter : public BodyFilter
 {
-public:
-    MyBodyFilter(BodyID ignoreBodyID) : mIgnoreBodyID(ignoreBodyID) {}
+	public:
+		MyBodyFilter(BodyID ignoreBodyID) : mIgnoreBodyID(ignoreBodyID) {}
 
-    // Override the ShouldCollide function
-    virtual bool ShouldCollide(const BodyID &inBodyID) const override
-    {
-        // Ignore the body if it matches the one you want to filter out
-        return inBodyID != mIgnoreBodyID;
-    }
+		// Override the ShouldCollide function
+		virtual bool ShouldCollide(const BodyID &inBodyID) const override
+		{
+			// Ignore the body if it matches the one you want to filter out
+			return inBodyID != mIgnoreBodyID;
+		}
 
-private:
-    BodyID mIgnoreBodyID; // Store the ID of the body to ignore
+	private:
+		BodyID mIgnoreBodyID; // Store the ID of the body to ignore
 };
-// class MyCastShapeCollector : public CastShapeCollector {
-// public:
-//     // Constructor
-//     MyCastShapeCollector() : CastShapeCollector() {}
 
-//     // Reset the collector to prepare for a new query
-//     virtual void Reset() override {
-//         mHits.clear();  // Clear previous hits
-//         // mEarlyOutFraction = FLT_MAX;  // Reset early out fraction
-//     }
-
-//     // Store hit results when a hit is found
-//     virtual void AddHit(const ResultType& inResult) override {
-//         // Add the hit to the list of hits
-//         mHits.push_back(inResult);
-
-//         // Update the early out fraction (to prevent unnecessary calculations)
-//         UpdateEarlyOutFraction(inResult.mFraction);
-//     }
-
-//     // Function to retrieve all the hits
-//     const std::vector<ResultType>& GetHits() const {
-//         return mHits;
-//     }
-
-//     // Check if we have any hits
-//     bool HasHits() const {
-//         return !mHits.empty();
-//     }
-
-//     // Function to get the first hit (if available)
-//     const ResultType& GetFirstHit() const {
-//         JPH_ASSERT(!mHits.empty());
-//         return mHits.front();
-//     }
-
-//     // Function to get the earliest hit fraction
-//     float GetHitFraction() const {
-//         return !mHits.empty() ? mHits.front().mFraction : FLT_MAX;
-//     }
-
-// private:
-//     std::vector<ResultType> mHits;  // Store all hits
-// };
 
 enum objectType
 {
@@ -328,133 +289,139 @@ enum objectType
 
 class JoltWrapper
 {
-private:
+	private:
 
-	// The threshold below which we consider an object to have fallen off the world
-	const float cKillThreshold = -50.0f;  
+		// The threshold below which we consider an object to have fallen off the world
+		const float cKillThreshold = -50.0f;  
 
-	// This is the max amount of rigid bodies that you can add to the physics system. If you try to add more you'll get an error.
-	// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
-	const uint cMaxBodies = 1024;
+		// This is the max amount of rigid bodies that you can add to the physics system. If you try to add more you'll get an error.
+		// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
+		const uint cMaxBodies = 1024;
 
-	// This determines how many mutexes to allocate to protect rigid bodies from concurrent access. Set it to 0 for the default settings.
-	const uint cNumBodyMutexes = 0;
+		// This determines how many mutexes to allocate to protect rigid bodies from concurrent access. Set it to 0 for the default settings.
+		const uint cNumBodyMutexes = 0;
 
-	// This is the max amount of body pairs that can be queued at any time (the broad phase will detect overlapping
-	// body pairs based on their bounding boxes and will insert them into a queue for the narrowphase). If you make this buffer
-	// too small the queue will fill up and the broad phase jobs will start to do narrow phase work. This is slightly less efficient.
-	// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
-	const uint cMaxBodyPairs = 1024;
+		// This is the max amount of body pairs that can be queued at any time (the broad phase will detect overlapping
+		// body pairs based on their bounding boxes and will insert them into a queue for the narrowphase). If you make this buffer
+		// too small the queue will fill up and the broad phase jobs will start to do narrow phase work. This is slightly less efficient.
+		// Note: This value is low because this is a simple test. For a real project use something in the order of 65536.
+		const uint cMaxBodyPairs = 1024;
 
-	// This is the maximum size of the contact constraint buffer. If more contacts (collisions between bodies) are detected than this
-	// number then these contacts will be ignored and bodies will start interpenetrating / fall through the world.
-	// Note: This value is low because this is a simple test. For a real project use something in the order of 10240.
-	const uint cMaxContactConstraints = 1024;
+		// This is the maximum size of the contact constraint buffer. If more contacts (collisions between bodies) are detected than this
+		// number then these contacts will be ignored and bodies will start interpenetrating / fall through the world.
+		// Note: This value is low because this is a simple test. For a real project use something in the order of 10240.
+		const uint cMaxContactConstraints = 1024;
 
-	// We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
-	const float cDeltaTime = 1.0f / 60.0f;
+		// We simulate the physics world in discrete time steps. 60 Hz is a good rate to update the physics system.
+		const float cDeltaTime = 1.0f / 60.0f;
 
-	// If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
-	const int cCollisionSteps = 1;
+		// If you take larger steps than 1 / 60th of a second you need to do multiple collision steps in order to keep the simulation stable. Do 1 collision step per 1 / 60th of a second (round up).
+		const int cCollisionSteps = 1;
 
-	// Player's current velocity (should be stored in the player object, this is just an example)
-    Vec3 velocity = Vec3(0.0f, 0.0f, 0.0f);  // This needs to persist between updates
-public:
+		// Player's current velocity (should be stored in the player object, this is just an example)
+		Vec3 velocity = Vec3(0.0f, 0.0f, 0.0f);  // This needs to persist between updates
 
-	MyBodyFilter *pBodyFilter; // filter out floor in collision
+		// only for rendered bodies to pass to ssbo
+		vector<RMat44> matrices; 
+		
+	public:
 
-	// Create mapping table from object layer to broadphase layer
-	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
-	BPLayerInterfaceImpl broad_phase_layer_interface;
+		MyBodyFilter *pBodyFilter; // filter out floor in collision
 
-	// Create class that filters object vs broadphase layers
-	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
-	ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
+		// Create mapping table from object layer to broadphase layer
+		// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
+		BPLayerInterfaceImpl broad_phase_layer_interface;
 
-	// Create class that filters object vs object layers
-	// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
-	ObjectLayerPairFilterImpl object_vs_object_layer_filter;
+		// Create class that filters object vs broadphase layers
+		// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
+		ObjectVsBroadPhaseLayerFilterImpl object_vs_broadphase_layer_filter;
 
-	// A body activation listener gets notified when bodies activate and go to sleep
-	// Note that this is called from a job so whatever you do here needs to be thread safe.
-	// Registering one is entirely optional.
-	MyBodyActivationListener body_activation_listener;
+		// Create class that filters object vs object layers
+		// Note: As this is an interface, PhysicsSystem will take a reference to this so this instance needs to stay alive!
+		ObjectLayerPairFilterImpl object_vs_object_layer_filter;
 
-	// A contact listener gets notified when bodies (are about to) collide, and when they separate again.
-	// Note that this is called from a job so whatever you do here needs to be thread safe.
-	// Registering one is entirely optional.
-	MyContactListener contact_listener;
+		// A body activation listener gets notified when bodies activate and go to sleep
+		// Note that this is called from a job so whatever you do here needs to be thread safe.
+		// Registering one is entirely optional.
+		MyBodyActivationListener body_activation_listener;
 
-	// We need a temp allocator for temporary allocations during the physics update. We're
-	// pre-allocating 10 MB to avoid having to do allocations during the physics update.
-	// B.t.w. 10 MB is way too much for this example but it is a typical value you can use.
-	// If you don't want to pre-allocate you can also use TempAllocatorMalloc to fall back to
-	// malloc / free.
-	TempAllocatorImpl *temp_allocator_ptr; // changed to ptr for wrapper purpose
+		// A contact listener gets notified when bodies (are about to) collide, and when they separate again.
+		// Note that this is called from a job so whatever you do here needs to be thread safe.
+		// Registering one is entirely optional.
+		MyContactListener contact_listener;
 
-	// We need a job system that will execute physics jobs on multiple threads. Typically
-	// you would implement the JobSystem interface yourself and let Jolt Physics run on top
-	// of your own job scheduler. JobSystemThreadPool is an example implementation.
-	JobSystemThreadPool *job_system_ptr; // changed to ptr for wrapper purpose
+		// We need a temp allocator for temporary allocations during the physics update. We're
+		// pre-allocating 10 MB to avoid having to do allocations during the physics update.
+		// B.t.w. 10 MB is way too much for this example but it is a typical value you can use.
+		// If you don't want to pre-allocate you can also use TempAllocatorMalloc to fall back to
+		// malloc / free.
+		TempAllocatorImpl *temp_allocator_ptr; // changed to ptr for wrapper purpose
 
-	BodyInterface *interface;
+		// We need a job system that will execute physics jobs on multiple threads. Typically
+		// you would implement the JobSystem interface yourself and let Jolt Physics run on top
+		// of your own job scheduler. JobSystemThreadPool is an example implementation.
+		JobSystemThreadPool *job_system_ptr; // changed to ptr for wrapper purpose
 
-	// Now we can create the actual physics system.
-	PhysicsSystem ps;
-	
-	/**************** important! */
-	// vector to keep track of the body ids that require render as well as simulating
-	// use physiscSystem.GetBodies() to get all bodies if needed
-	BodyIDVector bodyIDs; 
+		BodyInterface *interface;
 
-	vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
+		// Now we can create the actual physics system.
+		PhysicsSystem ps;
+		
+		/**************** important! */
+		// vector to keep track of the body ids that require render as well as simulating
+		// use physiscSystem.GetBodies() to get all bodies if needed
+		BodyIDVector bodyIDs; 
 
-	JoltWrapper();
-	~JoltWrapper();
+		
 
-	void joltRegister();
-	void joltUnregister();
-	void update();
-	// void updateKinematic(BodyID inBody, Vec3 inPosition, float deltaTime);
-	// BodyInterface& get_interface();
-	BodyID create_object(RenderPool& render, objectType inType, Model &inModel, RVec3Arg inPosition, QuatArg inRot);
-	BodyID create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation = Quat::sIdentity(), 
-		EMotionType inMotionType = EMotionType::Static, 
-		ObjectLayer inObjectLayer = Layers::NON_MOVING, 
-		EActivation inActivation = EActivation::DontActivate);
-	
-	void optimize();
+		JoltWrapper();
+		~JoltWrapper();
+
+		void joltRegister();
+		void joltUnregister();
+		void update();
+		// void updateKinematic(BodyID inBody, Vec3 inPosition, float deltaTime);
+		// BodyInterface& get_interface();
+		BodyID create_object(RenderPool& render, objectType inType, modelI &inModel, RVec3Arg inPosition, QuatArg inRot);
+		BodyID create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation = Quat::sIdentity(), 
+			EMotionType inMotionType = EMotionType::Static, 
+			ObjectLayer inObjectLayer = Layers::NON_MOVING, 
+			EActivation inActivation = EActivation::DontActivate);
+		
+		unsigned int getBufferSize();
+		const void* getBufferData();
+		void optimize();
 };
 
 class PlayerController {
-private:
-	// Ground detection threshold
-	const float cGroundDetectionThreshold 	= 0.0f;
-	const float cHalfHeight 				= 1.33f;
-	const float cRadius 					= 1.33f;
-	const float cGravity 					= -20.0f;
-	const float cGravityFall 				= cGravity * 2.0f;
-	const float cMaxFallSpeed 				= -50.0f;
+	private:
+		// Ground detection threshold
+		const float cGroundDetectionThreshold 	= 0.0f;
+		const float cHalfHeight 				= 1.33f;
+		const float cRadius 					= 1.33f;
+		const float cGravity 					= -20.0f;
+		const float cGravityFall 				= cGravity * 2.0f;
+		const float cMaxFallSpeed 				= -50.0f;
 
-	JoltWrapper *pJolt;
+		JoltWrapper *pJolt;
+		
+	public:
+		BodyID bodyID;
+		Vec3 position  		= Vec3::sZero();
+		Vec3 velocity 		= Vec3::sZero();
+		bool isGrounded 	= false;
+		bool isJumping 		= false;
+		float jumpForce 	= 12.0f;
+		float playerSpeed 	= 8;
+
 	
-public:
-    BodyID bodyID;
-    Vec3 position  		= Vec3::sZero();
-    Vec3 velocity 		= Vec3::sZero();
-    bool isGrounded 	= false;
-	bool isJumping 		= false;
-    float jumpForce 	= 12.0f;
-	float playerSpeed 	= 8;
 
-	vector<uint> textureIndices;
+		// vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
 
-	// vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
-
-	PlayerController(RenderPool& inRenderPool, JoltWrapper *inJolt, Vec3 inPosition);
-	bool cast_ray(Vec3 start, Vec3 end, float *outDepth);
-	Vec3 cast_shape(Vec3 inDirection, Vec3 inPosition);
-	void update(ControllerInterface controllerInterface, float deltaTime);
+		PlayerController(JoltWrapper *inJolt, Vec3 inPosition);
+		bool cast_ray(Vec3 start, Vec3 end, float *outDepth);
+		Vec3 cast_shape(Vec3 inDirection, Vec3 inPosition);
+		void update(controllerI controllerInterface, float deltaTime);
 };
 
 void console_RMat44(const JPH::RMat44& mat);

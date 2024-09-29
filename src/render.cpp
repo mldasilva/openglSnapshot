@@ -5,7 +5,51 @@
 // Buffer Object
 //
 // =======================================================================================
-bufferObject::bufferObject(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& command)
+
+DaSilva::BufferObject::BufferObject(RenderPool &renderPool)
+{
+    // BufferObject(renderPool.vertices, 8, renderPool.indices, renderPool.commands);
+    cout << "creating buffer object..." << endl;
+    glGenVertexArrays(1, &VAO); 
+    glBindVertexArray(VAO); 
+    
+    glGenBuffers(1, &VBO); 
+    glBindBuffer(GL_ARRAY_BUFFER, VBO); 
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * renderPool.vertices.size(), renderPool.vertices.data(), GL_STATIC_DRAW); 
+    
+
+    // assuming 8 vertex offset
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
+    
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, normal));
+    
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texUV));
+
+
+    glGenBuffers(1, &EBO); 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); 
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * renderPool.indices.size(), renderPool.indices.data(), GL_STATIC_DRAW); 
+    
+
+    if(renderPool.commands.data() != NULL)
+    {
+        glGenBuffers(1, &indirectBuffer); 
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer); 
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawElementsIndirectCommand) * renderPool.commands.size(), renderPool.commands.data(), GL_STATIC_DRAW);
+        // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+        commandCount = renderPool.commands.size();
+    }
+    else{
+        // printf("bufferObject command error\n");
+        cout << "bufferObject command error\n" << endl;
+        return;
+    }
+}
+
+DaSilva::BufferObject::BufferObject(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& commands)
 {
     cout << "creating buffer object..." << endl;
     glGenVertexArrays(1, &VAO); 
@@ -42,13 +86,13 @@ bufferObject::bufferObject(vector<vertex>& vertices, uint vertexOffset, vector<u
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * indices.size(), indices.data(), GL_STATIC_DRAW); 
     
 
-    if(command.data() != NULL)
+    if(commands.data() != NULL)
     {
         glGenBuffers(1, &indirectBuffer); 
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer); 
-        glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawElementsIndirectCommand) * command.size(), command.data(), GL_STATIC_DRAW);
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawElementsIndirectCommand) * commands.size(), commands.data(), GL_STATIC_DRAW);
         // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
-        commandCount = command.size();
+        commandCount = commands.size();
     }
     else{
         // printf("bufferObject command error\n");
@@ -58,7 +102,7 @@ bufferObject::bufferObject(vector<vertex>& vertices, uint vertexOffset, vector<u
 
 }
 
-bufferObject::~bufferObject()
+DaSilva::BufferObject::~BufferObject()
 {
     cout << "deleting buffer object" << endl;
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -76,19 +120,29 @@ bufferObject::~bufferObject()
 // Render Pool
 //
 // =======================================================================================
-RenderPool::RenderPool()
+DaSilva::RenderPool::RenderPool()
 {
     cout << "creating renderPool object..." << endl;
 }
 
-RenderPool::~RenderPool()
+DaSilva::RenderPool::~RenderPool()
 {
     cout << "deleting renderPool object..." << endl;
 }
 
-uint RenderPool::getCount()
+uint DaSilva::RenderPool::getCount()
 {
     return count;
+}
+
+const void *DaSilva::RenderPool::getBufferData()
+{
+    return matrices.data();
+}
+
+uint DaSilva::RenderPool::getBufferSize()
+{
+    return matrices.size() * sizeof(mat4);
 }
 
 /// @brief 
@@ -96,7 +150,7 @@ uint RenderPool::getCount()
 /// @param i 
 /// @param position 
 /// @return renderID / index that model information was inserted
-uint RenderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
+uint DaSilva::RenderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
 {
     // rp.commands[i].count           = objects.object[i].indexCount;
     // rp.commands[i].instanceCount   = 1; // objects.object[i][i].instanceCount
@@ -124,7 +178,7 @@ uint RenderPool::insert(vector<vertex> v, vector<uint> i, vec3 position)
 /// @param v vertex data
 /// @param i index data
 /// @return the index of insertsion
-uint RenderPool::insert(vector<vertex> v, vector<uint> i)
+uint DaSilva::RenderPool::insert(vector<vertex> v, vector<uint> i, uint instanceCount)
 {
     // rp.commands[i].count           = objects.object[i].indexCount;
     // rp.commands[i].instanceCount   = 1; // objects.object[i][i].instanceCount
@@ -136,7 +190,7 @@ uint RenderPool::insert(vector<vertex> v, vector<uint> i)
     // vertexOffset    += objects.object[i].vertexCount;
     // instanceOffset  += 1;
 
-    commands.push_back(DrawElementsIndirectCommand(i.size(), 1, indices.size(), vertices.size(), count));
+    commands.push_back(DrawElementsIndirectCommand(i.size(), instanceCount, indices.size(), vertices.size(), count));
     vertices.insert(vertices.end(), v.begin(), v.end());
     indices.insert(indices.end(), i.begin(), i.end());
 

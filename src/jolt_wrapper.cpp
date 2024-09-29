@@ -133,12 +133,12 @@ void JoltWrapper::update()
 //     return ps.GetBodyInterface();
 // }
 
-BodyID JoltWrapper::create_object(RenderPool& render, objectType inType, Model &inModel, RVec3Arg inPosition, QuatArg inRot)
+BodyID JoltWrapper::create_object(RenderPool& render, objectType inType, modelI &inModel, RVec3Arg inPosition, QuatArg inRot)
 {
 	cout << " created object" << endl;
 	BodyID result;
 
-	render.insert(inModel.vertices, inModel.indices);
+	render.insert(inModel.vertices, inModel.indices, 1);
 
 	// Rotation (quaternion)
     // Quat rotation = Quat::sRotation(Vec3::sAxisY(), DegreesToRadians(45.0f));  // Rotate 45 degrees around the Y axis
@@ -218,6 +218,16 @@ BodyID JoltWrapper::create_shape(const Shape *inShape, bool isSensor, RVec3Arg i
 	return b_id;
 }
 
+unsigned int JoltWrapper::getBufferSize()
+{
+    return matrices.size() * sizeof(RMat44);
+}
+
+const void *JoltWrapper::getBufferData()
+{
+    return matrices.data();
+}
+
 void JoltWrapper::optimize()
 {
 	// Optional step: Before starting the physics simulation you can optimize the broad phase. This improves collision detection performance (it's pointless here because we only have 2 bodies).
@@ -226,15 +236,10 @@ void JoltWrapper::optimize()
 	ps.OptimizeBroadPhase();
 }
 
-PlayerController::PlayerController(RenderPool& inRenderPool, JoltWrapper *inJolt, Vec3 inPosition)
+PlayerController::PlayerController(JoltWrapper *inJolt, Vec3 inPosition)
 {
 	pJolt = inJolt;
 	position = inPosition;
-
-	textureIndices.push_back(0); // every billboard will need a texture index
-	
-	Billboard billboard(1);
-    inRenderPool.insert(billboard.vertices, billboard.indices);
 
 	// breaking out create object for player so we can control capsule shape 
 	// without changing creat object parameters
@@ -347,7 +352,7 @@ Vec3 PlayerController::cast_shape(Vec3 inDirection, Vec3 inPosition)
 }
 
 
-void PlayerController::update(ControllerInterface controllerInterface, float deltaTime)
+void PlayerController::update(controllerI controllerInterface, float deltaTime)
 {
 	// Get player position and adjust for capsule height
 	// Adjust this based on your player capsule's half-height
