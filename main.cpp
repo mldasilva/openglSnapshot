@@ -30,6 +30,10 @@
 // know issue:
 // dragging window freezes game and messes up deltatime
 // multiple different functions to open files to strings
+#include <iostream>
+#include <vector>
+#include <functional>
+#include <algorithm>
 
 int main(void)
 {
@@ -93,6 +97,10 @@ int main(void)
     Model cube(model_cube);
     Model cone(model_cone);
     
+    // ===============================================================
+    // test world scene
+    // ===============================================================
+
     render_main.insert(cone.vertices, cone.indices, vec3(0, -1, 0));
     
     for (size_t i = 0; i < 10; i++)
@@ -130,13 +138,14 @@ int main(void)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     // ===============================================================
-    // animator & scene & player controller
+    // animator & billboard scene & player controller
     // ===============================================================
     
-    Animator animator;
-    animator.addAnimation("hello", 0, 9, 81, 0.25f, true);
-    animator.addAnimation("hello1", 0, 9, 81, 3.0f, true);
-    
+    Animator animator(3);
+    animator.setAnimation("null", 0);
+    animator.setAnimation("hello", 1);
+    animator.setAnimation("hello1", 2);
+   
     Scene scene;
     scene.add("player1", vec3(-3.0f,10.0f,0.0f));
     scene.add("enemy01", vec3(-3.0f,10.0f,5.0f));
@@ -146,8 +155,11 @@ int main(void)
     render_bilb.insert(billboard.vertices, billboard.indices, 10);
 
     // create player controller
-    PlayerController playerController(&jolt, v(scene.fetch("player1")));
-
+    PlayerController playerController(
+        &jolt, &animator, 
+        &controller.interface, &camera.interface,
+        v(scene.fetch("player1")));
+    
     // ===============================================================
     // finalizing before scene
     // ===============================================================
@@ -177,14 +189,14 @@ int main(void)
 
         /* controls here */     
         controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
-        playerController.   update(controller.interface, deltaTime); // player controller
+        playerController.   update(deltaTime); // player controller
         camera.             moveTo(v(playerController.position));
 
         scene.update(0, v(playerController.position)); // update the first billboard
         
         /* physics */
         jolt.update(); // physics tick
-        animator.update(vec3(0), deltaTime);
+        animator.update(deltaTime);
 
         shader_jolt.update_ssbo(0); // matrices
         shader_bilb.update_ssbo(0);   // vec3 positions

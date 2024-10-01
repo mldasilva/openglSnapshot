@@ -37,6 +37,23 @@ static ostream& operator<<(ostream& os, const vec4& vec) {
     return os;
 }
 
+
+static bool compare(const vec3& value1, const vec3& value2, float allowance) {
+    return std::fabs(value1.x - value2.x) <= allowance &&
+            std::fabs(value1.y - value2.y) <= allowance &&
+            std::fabs(value1.z - value2.z) <= allowance;
+}
+
+static bool compare(const vec2& value1, const vec2& value2, float allowance) {
+    return std::fabs(value1.x - value2.x) <= allowance &&
+            std::fabs(value1.y - value2.y) <= allowance;
+}
+
+static float roundto(float input, int places){
+
+    return roundf(input * places) / places;
+}
+
 static glm::vec3 extractEulerAngles(const glm::mat4& mat) {
     glm::vec3 euler;
 

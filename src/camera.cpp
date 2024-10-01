@@ -10,6 +10,7 @@ Camera::Camera(uint width, uint height)
 
     // Orthographic projection setup
     projection = glm::ortho(-halfWidth, halfWidth, -halfHeight, halfHeight, -1.0f, 100.0f);
+    interface.projection = projection;
 
     // View matrix setup (camera looking at the scene)
     position = glm::vec3(-15.0f, 15.0f, 15.0f);     // Camera position
@@ -53,6 +54,9 @@ void Camera::move(vec3 translate)
     target += translate;
     position += translate;
     view = glm::lookAt(position + translate, target + translate, up);
+
+    interface.target = target;
+    interface.view = view;
 }
 
 void Camera::moveTo(vec3 target)
@@ -61,4 +65,7 @@ void Camera::moveTo(vec3 target)
     Camera::position = target + offset;
 
     view = glm::lookAt(position, target, up);
+
+    interface.target = target;
+    interface.view = view;
 }

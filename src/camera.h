@@ -3,6 +3,8 @@
 
 #include "glmath.h"
 
+#include "camera_interface.h"
+
 class Camera{
 public:
     vec3 position;
@@ -24,6 +26,8 @@ public:
     void rotate(float angleAddition);
     void move(vec3 translate);
     void moveTo(vec3 vec);
+
+    cameraI interface;
 };
 
 #endif

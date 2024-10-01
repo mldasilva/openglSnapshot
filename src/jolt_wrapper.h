@@ -4,10 +4,12 @@
 #pragma once
 
 // #include "model.h"
+#include "glmath.h"
 #include "model_interface.h"
 #include "controller_interface.h"
+#include "camera_interface.h"
 #include "render.h"
-
+#include "animator.h"
 
 // The Jolt headers don't include Jolt.h. Always include Jolt.h before including any other Jolt header.
 // You can use Jolt.h in your precompiled header to speed up compilation.
@@ -393,6 +395,13 @@ class JoltWrapper
 		void optimize();
 };
 
+enum animState
+{
+	up, down, left, right, 
+	upLeft, upRight, downLeft, downRight, 
+	still
+};
+
 class PlayerController {
 	private:
 		// Ground detection threshold
@@ -404,24 +413,37 @@ class PlayerController {
 		const float cMaxFallSpeed 				= -50.0f;
 
 		JoltWrapper *pJolt;
+		Animator 	*pAnimator;
+		controllerI *pControllerI;
+		cameraI 	*pCameraI;
+
+		animState playerState = still;
+		bool playerState_dirty= false;
+
+		bool jumping = false;
 		
+		Vec3 mouseScreenToWorld(vec2 mouse);
+		vec2 mouseScreenDirection(vec2 mouse);
+
 	public:
 		BodyID bodyID;
 		Vec3 position  		= Vec3::sZero();
 		Vec3 velocity 		= Vec3::sZero();
+		// bool velocity_dirty = false;
+
 		bool isGrounded 	= false;
-		bool isJumping 		= false;
+
 		float jumpForce 	= 12.0f;
 		float playerSpeed 	= 8;
 
-	
-
-		// vector<RMat44> matrices; // only for rendered bodies to pass to ssbo
-
-		PlayerController(JoltWrapper *inJolt, Vec3 inPosition);
+		PlayerController(JoltWrapper *inJolt, Animator *inAnimator, controllerI *inControllerI, cameraI *inCameraI, Vec3 inPosition);
+		
 		bool cast_ray(Vec3 start, Vec3 end, float *outDepth);
 		Vec3 cast_shape(Vec3 inDirection, Vec3 inPosition);
-		void update(controllerI controllerInterface, float deltaTime);
+		void update(float deltaTime);
+		
+		animState getPlayerState();
+		void setPlayerState(vec2 direction, float allowance);
 };
 
 void console_RMat44(const JPH::RMat44& mat);

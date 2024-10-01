@@ -23,15 +23,36 @@ class Scene{
 
         int find(string name)
         {
-            auto um = map.find(name);
-            // cout << "Iterator points to " << it->first << " = " << it->second << endl;
-            return um->second;
+            auto& um = map.find(name);
+            
+            if (um != map.end()) 
+            {
+                // Key found
+                return um->second;
+            } 
+            else 
+            {
+                // Key not found
+                throw std::runtime_error("Scene Value not found!");
+            }
+
+            return 0;
         }
 
         vec3 fetch(string name)
         {
-            auto um = map.find(name);
-            return vec3(positions[um->second]);
+            auto& um = map.find(name);
+            if (um != map.end()) 
+            {
+                // Key found
+                return vec3(positions[um->second]);
+            } 
+            else 
+            {
+                // Key not found
+                throw std::runtime_error("Scene Value Attribute not found!");
+            }
+            return vec3(0);
         }
 
         unsigned int getBufferSize()

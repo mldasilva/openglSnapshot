@@ -100,39 +100,6 @@ void JoltWrapper::update()
 	
 }
 
-// void joltWrapper::updateKinematic(BodyID inBody, Vec3 inPosition, float deltaTime)
-// {
-//     if(check_ground(inBody))
-//     {
-//         // Reset vertical velocity when grounded
-//         // velocity.SetY(0.0f);
-
-//         // Move kinematic body to the desired position
-//         interface->MoveKinematic(inBody, inPosition, Quat::sIdentity(), deltaTime);
-//     }
-//     else
-//     {
-//         // Apply gravity to velocity if not grounded
-//         velocity += cGravity * deltaTime * 10;
-
-//         // Update the position by adding the velocity to it
-//         Vec3 newPosition = inPosition + velocity * deltaTime;
-
-//         // Output falling for debug purposes
-//         cout << "falling " << endl;
-
-//         // Move the player to the new position (affected by gravity)
-//         interface->MoveKinematic(inBody, newPosition, Quat::sIdentity(), deltaTime);
-//     }
-// }
-
-// BodyInterface &joltWrapper::get_interface()
-// {
-// 	// The main way to interact with the bodies in the physics system is through the body interface. There is a locking and a non-locking
-// 	// variant of this. We're going to use the locking version (even though we're not planning to access bodies from multiple threads)
-//     return ps.GetBodyInterface();
-// }
-
 BodyID JoltWrapper::create_object(RenderPool& render, objectType inType, modelI &inModel, RVec3Arg inPosition, QuatArg inRot)
 {
 	cout << " created object" << endl;
@@ -236,9 +203,67 @@ void JoltWrapper::optimize()
 	ps.OptimizeBroadPhase();
 }
 
-PlayerController::PlayerController(JoltWrapper *inJolt, Vec3 inPosition)
+Vec3 PlayerController::mouseScreenToWorld(vec2 mouse)
+{
+	// Convert mouse position to NDC
+	float ndcX = (2.0f * mouse.x) / pControllerI->windowWidth - 1.0f;
+	float ndcY = 1.0f - (2.0f * mouse.y) / pControllerI->windowHeight; // Invert Y-axis
+
+	// Create NDC positions for near and far points (Z = -1 for near, 1 for far)
+	glm::vec4 rayClipNear(ndcX, ndcY, -1.0f, 1.0f);
+	glm::vec4 rayClipFar(ndcX, ndcY, 1.0f, 1.0f);
+
+	// Convert from clip space to view space
+	glm::mat4 inverseProjection = glm::inverse(pCameraI->projection);
+	glm::vec4 rayViewNear = inverseProjection * rayClipNear;
+	glm::vec4 rayViewFar = inverseProjection * rayClipFar;
+	rayViewNear /= rayViewNear.w; // Perspective divide
+	rayViewFar /= rayViewFar.w;
+	
+	// Convert from view space to world space
+	glm::mat4 inverseView = glm::inverse(pCameraI->view);
+	glm::vec4 rayWorldNear = inverseView * rayViewNear;
+	glm::vec4 rayWorldFar = inverseView * rayViewFar;
+
+	// Ray origin is the near point, direction is the vector from near to far
+	vec3 rayOrigin = glm::vec3(rayWorldNear);
+	vec3 rayDirection = glm::normalize(glm::vec3(rayWorldFar - rayWorldNear));
+
+	/* plane intersection */
+
+	// Plane equation: y = 0
+	float t = -rayOrigin.y / rayDirection.y;
+
+	// If t < 0, the intersection is behind the ray origin, so ignore it
+	// if (t < 0.0f) {
+		// cout << "false" << endl;
+	// }
+
+	// Calculate the intersection point
+	vec3 intersectionPoint = rayOrigin + t * rayDirection;
+
+	// return vec3(0);
+    return v(glm::normalize(intersectionPoint - pCameraI->target));
+}
+
+vec2 PlayerController::mouseScreenDirection(vec2 mouse)
+{
+		// Convert mouse position to NDC
+	float ndcX = (2.0f * mouse.x) / pControllerI->windowWidth - 1.0f;
+	float ndcY = 1.0f - (2.0f * mouse.y) / pControllerI->windowHeight; // Invert Y-axis
+
+	vec2 n = normalize(vec2(ndcX, ndcY));
+
+    return vec2(roundto(n.x,100),roundto(n.y,100));
+}
+
+PlayerController::PlayerController(JoltWrapper *inJolt, Animator *inAnimator, controllerI *inControllerI, cameraI *inCameraI, Vec3 inPosition)
 {
 	pJolt = inJolt;
+	pAnimator = inAnimator;
+	pControllerI = inControllerI;
+	pCameraI = inCameraI;
+
 	position = inPosition;
 
 	// breaking out create object for player so we can control capsule shape 
@@ -351,8 +376,9 @@ Vec3 PlayerController::cast_shape(Vec3 inDirection, Vec3 inPosition)
     return result;
 }
 
-
-void PlayerController::update(controllerI controllerInterface, float deltaTime)
+/// @brief 
+/// @param deltaTime
+void PlayerController::update(float deltaTime)
 {
 	// Get player position and adjust for capsule height
 	// Adjust this based on your player capsule's half-height
@@ -362,19 +388,32 @@ void PlayerController::update(controllerI controllerInterface, float deltaTime)
     Vec3 end = start + Vec3(0.0f, -0.01f, 0.0f);
 	
 	isGrounded = cast_ray(start, end, nullptr);
+
 	// isGrounded = true;
 	if (isGrounded) 
 	{
-		// Reset vertical velocity when grounded
-		velocity.SetY(0.0f);
+		velocity.SetY(0.0f);// Reset vertical velocity when grounded
 
 		// Handle jumping input (e.g., space bar)
-		if (controllerInterface.isJumping) {
+		if (pControllerI->isJumping) {
 			velocity.SetY(jumpForce);  // Apply jump force
+			cout << "j";
 		}
-
-		velocity.SetX(controllerInterface.mouseDirection.x * playerSpeed);
-		velocity.SetZ(controllerInterface.mouseDirection.z * playerSpeed);
+		// only on mouse position change / controller changed mouse direction, update velocity!
+		if(pControllerI->mouseLeftDown && pControllerI->isMouseScreenDirty)
+		{
+			Vec3 direction = mouseScreenToWorld(pControllerI->mouseScreenPosition);
+			velocity.SetX(direction.GetX() * playerSpeed);
+			velocity.SetZ(direction.GetZ() * playerSpeed);
+			
+			cout << "w";
+		}
+		if(!pControllerI->mouseLeftDown && velocity != Vec3::sZero())
+		{
+			velocity.SetX(0);
+			velocity.SetZ(0);
+			cout << "!";
+		}
 	} 
 	else 
 	{
@@ -387,23 +426,121 @@ void PlayerController::update(controllerI controllerInterface, float deltaTime)
 		{
 			velocity += Vec3(0.0f, cGravityFall * deltaTime , 0.0f);
 		}
-
 		// Cap fall speed
 		if (velocity.GetY() < cMaxFallSpeed) 
 		{
 			velocity.SetY(cMaxFallSpeed);
+			cout << "falling" << endl;
 		}
 	}
 	
-	position -= cast_shape(velocity, position); // collision resolution
-	position += velocity * deltaTime; // Update player position based on velocity
+	if(velocity != Vec3::sZero())
+	{
+		position -= cast_shape(velocity, position); // collision resolution
+		position += velocity * deltaTime; // Update player position based on velocity
+	}
 
+	// !bug? having joly interface inside the velocity != zero causes strange physics behaviour
 	// Move the player body
 	pJolt->interface->MoveKinematic(bodyID, position, Quat::sIdentity(), deltaTime);
-	
-	// temp need to update matrices
-	// matrices[0] = Mat44::sTranslation(position);
 
+}
+
+animState PlayerController::getPlayerState()
+{
+	// playerState_dirty = false;
+    return playerState;
+}
+
+void PlayerController::setPlayerState(vec2 direction, float allowance)
+{
+	// animState temp;
+	// // playerState_dirty = true;
+	// if(direction.y >= allowance)
+	// {
+	// 	// cout << "up?";
+	// 	temp = animState::up;
+	// }
+	
+	// if(direction.y <= -allowance)
+	// {
+	// 	// cout << "down?";
+	// 	temp = animState::down;
+	// }
+
+	// if(direction.x >= allowance)
+	// {
+	// 	// cout << "right?";
+	// 	temp = animState::right;
+	// }
+
+	// if(direction.x <= -allowance)
+	// {
+	// 	// cout << "left?";
+	// 	temp = animState::left;
+	// }
+
+	// if(direction.x > 0 && direction.y > 0 && direction.y < allowance && direction.x < allowance)
+	// {
+	// 	// cout << "up right";
+	// 	temp = animState::upRight;
+	// }
+
+	// if(direction.x > 0 && direction.y < 0 && direction.y > -allowance && direction.x < allowance)
+	// {
+	// 	// cout << "down right";
+	// 	temp = animState::downRight;
+	// }
+
+	// if(direction.x < 0 && direction.y > 0 && direction.y < allowance && direction.x > -allowance)
+	// {
+	// 	// cout << "up left";
+	// 	temp = animState::upLeft;
+	// }
+
+	// if(direction.x < 0 && direction.y < 0 && direction.y > -allowance && direction.x > -allowance)
+	// {
+	// 	// cout << "down left";
+	// 	temp = animState::downLeft;
+	// }
+	// // cout << temp << endl;
+
+	// if(playerState == temp)
+	// {
+	// 	return;
+	// }
+	// else
+	// {
+	// 	playerState = temp;
+	// 	switch(playerState)
+	// 	{
+	// 		case animState::up:
+	// 			pAnimator->setAnimation("hello", 0);
+	// 			break;
+	// 		case animState::down:
+	// 			pAnimator->setAnimation("hello", 0);
+	// 			break;
+	// 		case animState::left:
+	// 			pAnimator->setAnimation("hello", 0);
+	// 			break;
+	// 		case animState::right:
+	// 			pAnimator->setAnimation("hello", 0);
+	// 			break;
+	// 		case animState::upLeft:
+	// 			pAnimator->setAnimation("null", 0);
+	// 			break;
+	// 		case animState::upRight:
+	// 			pAnimator->setAnimation("null", 0);
+	// 			break;
+	// 		case animState::downLeft:
+	// 			pAnimator->setAnimation("null", 0);
+	// 			break;
+	// 		case animState::downRight:
+	// 			pAnimator->setAnimation("null", 0);
+	// 			break;
+	// 	}
+	// 	// cout << "change state" << endl;
+	// }
 }
 
 // Function to print a single RMat44 matrix

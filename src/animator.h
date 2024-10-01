@@ -1,6 +1,5 @@
 #pragma once
 
-#include "glmath.h"
 #include "typedef.h"
 #include <iostream>
 #include <unordered_map>
@@ -10,7 +9,7 @@ using namespace std;
 struct Anim{
     int atlas_grid_size;
     int texture_index;
-    int atlas_frame; // current frame
+    int atlas_frame; // current frame // requires updating
 };
 
 struct Animation{
@@ -19,26 +18,37 @@ struct Animation{
     bool b_loop;
     float current_time;
 
-    uint animation_shader_index = 0; // Anim vector index;
+    Anim shaderAnim;    // shader package
+
+    // bool playing;
+    string name;
 };
+
 
 class Animator{
     private:
-        vector<Anim> animations_shader;
-        unordered_map<string, Animation> animations;
-        float time;
-        
-    public:
-        Animator();
-        ~Animator();
+        unordered_map<string, Animation> animations;    // to hold all
 
-        void addAnimation(string name, uint textureIndex, uint atlasGridSize, uint frameCount, float frameTime, bool loop);
-        void update(vec3 innputDirection, float deltaTime);
-        void play();
-        void stop();
+        vector<Animation> animations_play;              // hold playing animations
+        vector<Anim> animations_shader_play;            // info for shader
+
+        void loadAnimation(string name, uint textureIndex, uint atlasGridSize, uint frameCount, float frameTime, bool loop);
+
+    public:
+        Animator(uint count);
+        ~Animator();
 
         unsigned int getBufferSize();
         const void* getBufferData();
 
-        uint find(string name);
+        void update(float deltaTime);
+
+        void setAnimation(string name, uint index);
+
+        void play(uint index, string name);
+        void stop(uint index, string name);
+
+        // void* interface;
 };
+
+
