@@ -403,8 +403,10 @@ class JoltWrapper
 // };
 
 enum animState{
-	a_error, a_still, a_up, a_down, a_left, a_right, 
-	a_upLeft, a_upRight, a_downLeft, a_downRight
+	a_error, a_still, 
+	a_up, a_down, a_left, a_right, 
+	a_upLeft, a_upRight, a_downLeft, a_downRight,
+	a_jumping, a_falling, a_landed
 };
 
 enum playerState{
@@ -431,14 +433,19 @@ class PlayerController {
 
 		void setPlayerState();
 		void setVelocity(float deltaTime);
+		void setRunningAnimation(vec2 direction, float allowance);
 
 		bool cast_ray(Vec3 start, Vec3 end, float *outDepth);
 		Vec3 cast_shape(Vec3 inDirection, Vec3 inPosition);
 
 		bool groundCheck();
 		bool isGrounded = false;
+
 	public:
-		playerState playerState = playerState::error;
+		animState eAnimState = animState::a_error;
+		animState ePrevAnimState = animState::a_error;
+		playerState ePlayerState = playerState::error;
+		playerState ePrevPlayerState = playerState::error;
 
 		BodyID bodyID;
 		Vec3 position  		= Vec3::sZero();

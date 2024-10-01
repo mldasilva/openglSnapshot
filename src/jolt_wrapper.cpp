@@ -396,20 +396,20 @@ void PlayerController::setPlayerState()
 	{
 		if(velocity == Vec3::sZero())
 		{
-			playerState = playerState::still;
+			ePlayerState = playerState::still;
 		}
 		else if(velocity.GetY() > 0) // grounded but velocity > 0 special case
 		{
 			// so close to the floor and the tick are the perfect moment we are jumping and grounded
-			playerState = playerState::jumping;
+			ePlayerState = playerState::jumping;
 		}
 		else if(velocity.GetX() != 0 || velocity.GetZ() != 0)
 		{
-			playerState = playerState::running;
+			ePlayerState = playerState::running;
 		}
 		else if(velocity.GetX() != 0 || velocity.GetY() != 0 || velocity.GetZ() != 0)
 		{
-			playerState = playerState::landed;
+			ePlayerState = playerState::landed;
 		}
 		else
 		{
@@ -421,12 +421,12 @@ void PlayerController::setPlayerState()
 		// we are headed upwards
 		if(position.GetY() > prevPosition.GetY())
 		{
-			playerState = playerState::jumping;
+			ePlayerState = playerState::jumping;
 		}
 		// we are headed downloads
 		else if(position.GetY() <= prevPosition.GetY())
 		{
-			playerState = playerState::falling;
+			ePlayerState = playerState::falling;
 		}
 		// we might ave just landed
 		else
@@ -439,24 +439,24 @@ void PlayerController::setPlayerState()
 void PlayerController::setVelocity(float deltaTime)
 {
 	// state reaction
-	if(playerState == playerState::still)
+	if(ePlayerState == playerState::still)
 	{
 		velocity.SetY(0);
 	}
-	if(playerState == playerState::running)
+	if(ePlayerState == playerState::running)
 	{
 		velocity.SetY(0);
 	}
-	if(playerState == playerState::jumping)
+	if(ePlayerState == playerState::jumping)
 	{
 		velocity += Vec3(0.0f, cGravity * deltaTime , 0.0f);
 	}
-	if(playerState == playerState::falling)
+	if(ePlayerState == playerState::falling)
 	{
 		// Apply gravity if not grounded
 		velocity += Vec3(0.0f, cGravityFall * deltaTime , 0.0f);
 	}
-	if(playerState == playerState::landed)
+	if(ePlayerState == playerState::landed)
 	{
 		velocity.SetY(0);
 	}
@@ -464,6 +464,8 @@ void PlayerController::setVelocity(float deltaTime)
 
 void PlayerController::update(float deltaTime)
 {
+	ePrevPlayerState = ePlayerState;
+
 	setPlayerState();
 
 	// cout << endl;
@@ -476,30 +478,77 @@ void PlayerController::update(float deltaTime)
 
 	setVelocity(deltaTime);
 
-	// controls:
+	// controls: should only fire once when needed
 	//================================
 
-	if (pControllerI->isJumping && playerState != playerState::jumping && isGrounded) {
+	if (pControllerI->isJumping && ePlayerState != playerState::jumping && isGrounded) {
 		velocity.SetY(jumpForce);  // Apply jump force
 	}
 
 	// only on mouse position change / controller changed mouse direction, update velocity!
 	if( (pControllerI->mouseLeftDown && pControllerI->isMouseScreenDirty) 
-		|| (pControllerI->mouseLeftDown && !pControllerI->isMouseScreenDirty && playerState == playerState::still) )
+		|| (pControllerI->mouseLeftDown && !pControllerI->isMouseScreenDirty && ePlayerState == playerState::still) )
 	{
 		Vec3 direction = mouseScreenToWorld(pControllerI->mouseScreenPosition);
 		velocity.SetX(direction.GetX() * playerSpeed);
 		velocity.SetZ(direction.GetZ() * playerSpeed);
+
+		
 	}
 
-	if(!pControllerI->mouseLeftDown && playerState == playerState::running)
+	if(!pControllerI->mouseLeftDown && ePlayerState == playerState::running)
 	{
 		velocity.SetX(0);
 		velocity.SetZ(0);
 	}
 
+	// animation :
+	//================================
+
+	ePrevAnimState = eAnimState;
+
+	if(ePlayerState == playerState::running)
+	{	
+		// changes eAnimState
+		setRunningAnimation(mouseScreenDirection(pControllerI->mouseScreenPosition), 0.98);
+
+		if(ePrevAnimState != eAnimState)
+		{
+			cout << "running: ";
+			switch(eAnimState)
+			{	
+				case animState::a_up:
+					cout << "up" << endl;
+					break;
+				case animState::a_left:
+					cout << "left" << endl;
+					break;
+				case animState::a_right:
+					cout << "right" << endl;
+					break;
+				case animState::a_down:
+					cout << "down" << endl;
+					break;
+				case animState::a_upLeft:
+					cout << "up left" << endl;
+					break;
+				case animState::a_upRight:
+					cout << "up right" << endl;
+					break;
+				case animState::a_downLeft:
+					cout << "down left" << endl;
+					break;
+				case animState::a_downRight:
+					cout << "down right" << endl;
+					break;
+			}
+		}
+	}
+
+
+
 	// update
-	if(playerState != playerState::error)
+	if(ePlayerState != playerState::error)
 	{
 		position -= cast_shape(velocity, position); // collision resolution
 		position += velocity * deltaTime; // Update player position based on velocity
@@ -516,96 +565,56 @@ void PlayerController::update(float deltaTime)
 //     return playerState;
 // }
 
-// void PlayerController::setPlayerState(vec2 direction, float allowance)
-// {
-	// animState temp;
-	// // playerState_dirty = true;
-	// if(direction.y >= allowance)
-	// {
-	// 	// cout << "up?";
-	// 	temp = animState::up;
-	// }
+void PlayerController::setRunningAnimation(vec2 direction, float allowance)
+{
+	if(direction.y >= allowance)
+	{
+		// cout << "up?" << endl;
+		eAnimState = animState::a_up;
+	}
 	
-	// if(direction.y <= -allowance)
-	// {
-	// 	// cout << "down?";
-	// 	temp = animState::down;
-	// }
+	if(direction.y <= -allowance)
+	{
+		// cout << "down?" << endl;
+		eAnimState = animState::a_down;
+	}
 
-	// if(direction.x >= allowance)
-	// {
-	// 	// cout << "right?";
-	// 	temp = animState::right;
-	// }
+	if(direction.x >= allowance)
+	{
+		// cout << "right?" << endl;
+		eAnimState = animState::a_right;
+	}
 
-	// if(direction.x <= -allowance)
-	// {
-	// 	// cout << "left?";
-	// 	temp = animState::left;
-	// }
+	if(direction.x <= -allowance)
+	{
+		// cout << "left?" << endl;
+		eAnimState = animState::a_left;
+	}
 
-	// if(direction.x > 0 && direction.y > 0 && direction.y < allowance && direction.x < allowance)
-	// {
-	// 	// cout << "up right";
-	// 	temp = animState::upRight;
-	// }
+	if(direction.x > 0 && direction.y > 0 && direction.y < allowance && direction.x < allowance)
+	{
+		// cout << "up right" << endl;
+		eAnimState = animState::a_upRight;
+	}
 
-	// if(direction.x > 0 && direction.y < 0 && direction.y > -allowance && direction.x < allowance)
-	// {
-	// 	// cout << "down right";
-	// 	temp = animState::downRight;
-	// }
+	if(direction.x > 0 && direction.y < 0 && direction.y > -allowance && direction.x < allowance)
+	{
+		// cout << "down right" << endl;
+		eAnimState = animState::a_downRight;
+	}
 
-	// if(direction.x < 0 && direction.y > 0 && direction.y < allowance && direction.x > -allowance)
-	// {
-	// 	// cout << "up left";
-	// 	temp = animState::upLeft;
-	// }
+	if(direction.x < 0 && direction.y > 0 && direction.y < allowance && direction.x > -allowance)
+	{
+		// cout << "up left" << endl;
+		eAnimState = animState::a_upLeft;
+	}
 
-	// if(direction.x < 0 && direction.y < 0 && direction.y > -allowance && direction.x > -allowance)
-	// {
-	// 	// cout << "down left";
-	// 	temp = animState::downLeft;
-	// }
-	// // cout << temp << endl;
-
-	// if(playerState == temp)
-	// {
-	// 	return;
-	// }
-	// else
-	// {
-	// 	playerState = temp;
-	// 	switch(playerState)
-	// 	{
-	// 		case animState::up:
-	// 			pAnimator->setAnimation("hello", 0);
-	// 			break;
-	// 		case animState::down:
-	// 			pAnimator->setAnimation("hello", 0);
-	// 			break;
-	// 		case animState::left:
-	// 			pAnimator->setAnimation("hello", 0);
-	// 			break;
-	// 		case animState::right:
-	// 			pAnimator->setAnimation("hello", 0);
-	// 			break;
-	// 		case animState::upLeft:
-	// 			pAnimator->setAnimation("null", 0);
-	// 			break;
-	// 		case animState::upRight:
-	// 			pAnimator->setAnimation("null", 0);
-	// 			break;
-	// 		case animState::downLeft:
-	// 			pAnimator->setAnimation("null", 0);
-	// 			break;
-	// 		case animState::downRight:
-	// 			pAnimator->setAnimation("null", 0);
-	// 			break;
-	// 	}
-	// 	// cout << "change state" << endl;
-	// }
-// }
+	if(direction.x < 0 && direction.y < 0 && direction.y > -allowance && direction.x > -allowance)
+	{
+		// cout << "down left" << endl;
+		eAnimState = animState::a_downLeft;
+	}
+}
 
 // Function to print a single RMat44 matrix
 void console_RMat44(const RMat44& mat) {

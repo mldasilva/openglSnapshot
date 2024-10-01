@@ -27,6 +27,12 @@
 //------------------
 // networking
 
+// idea:
+//----------------
+// spell system: spell cards some crafted most found like loot
+// talent tree is just like pokemon energy cards dictating what card/spells can be used/ equiped
+// cards/spells have random attributes like equipment
+
 // know issue:
 // dragging window freezes game and messes up deltatime
 // multiple different functions to open files to strings
@@ -191,8 +197,6 @@ int main(void)
         controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
         playerController.   update(deltaTime); // player controller
         camera.             moveTo(v(playerController.position));
-        // cout << playerController.playerState << endl;
-        // cout << playerController.velocity << endl;
         scene.update(0, v(playerController.position)); // update the first billboard
         
         /* physics */
