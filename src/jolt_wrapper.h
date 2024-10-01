@@ -4,7 +4,7 @@
 #pragma once
 
 // #include "model.h"
-#include "glmath.h"
+// #include "glmath.h"
 #include "model_interface.h"
 #include "controller_interface.h"
 #include "camera_interface.h"
@@ -395,11 +395,20 @@ class JoltWrapper
 		void optimize();
 };
 
-enum animState
-{
-	up, down, left, right, 
-	upLeft, upRight, downLeft, downRight, 
-	still
+// enum animState
+// {
+// 	up, down, left, right, 
+// 	upLeft, upRight, downLeft, downRight, 
+// 	still
+// };
+
+enum animState{
+	a_error, a_still, a_up, a_down, a_left, a_right, 
+	a_upLeft, a_upRight, a_downLeft, a_downRight
+};
+
+enum playerState{
+	error, still, landed, running, jumping, falling
 };
 
 class PlayerController {
@@ -417,33 +426,35 @@ class PlayerController {
 		controllerI *pControllerI;
 		cameraI 	*pCameraI;
 
-		animState playerState = still;
-		bool playerState_dirty= false;
-
-		bool jumping = false;
-		
 		Vec3 mouseScreenToWorld(vec2 mouse);
 		vec2 mouseScreenDirection(vec2 mouse);
 
+		void setPlayerState();
+		void setVelocity(float deltaTime);
+
+		bool cast_ray(Vec3 start, Vec3 end, float *outDepth);
+		Vec3 cast_shape(Vec3 inDirection, Vec3 inPosition);
+
+		bool groundCheck();
+		bool isGrounded = false;
 	public:
+		playerState playerState = playerState::error;
+
 		BodyID bodyID;
 		Vec3 position  		= Vec3::sZero();
+		Vec3 prevPosition 	= Vec3::sZero(); // position on the previous tick
 		Vec3 velocity 		= Vec3::sZero();
-		// bool velocity_dirty = false;
+		Vec3 prevVelocity 	= Vec3::sZero(); // velocity on the previous tick
 
-		bool isGrounded 	= false;
-
-		float jumpForce 	= 12.0f;
+		float jumpForce 	= 13.0f;
 		float playerSpeed 	= 8;
 
 		PlayerController(JoltWrapper *inJolt, Animator *inAnimator, controllerI *inControllerI, cameraI *inCameraI, Vec3 inPosition);
 		
-		bool cast_ray(Vec3 start, Vec3 end, float *outDepth);
-		Vec3 cast_shape(Vec3 inDirection, Vec3 inPosition);
 		void update(float deltaTime);
-		
-		animState getPlayerState();
-		void setPlayerState(vec2 direction, float allowance);
+
+		// animState getPlayerState();
+		// void setPlayerState(vec2 direction, float allowance);
 };
 
 void console_RMat44(const JPH::RMat44& mat);

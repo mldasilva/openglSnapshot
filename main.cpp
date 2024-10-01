@@ -191,7 +191,8 @@ int main(void)
         controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
         playerController.   update(deltaTime); // player controller
         camera.             moveTo(v(playerController.position));
-
+        // cout << playerController.playerState << endl;
+        // cout << playerController.velocity << endl;
         scene.update(0, v(playerController.position)); // update the first billboard
         
         /* physics */
@@ -199,8 +200,8 @@ int main(void)
         animator.update(deltaTime);
 
         shader_jolt.update_ssbo(0); // matrices
-        shader_bilb.update_ssbo(0);   // vec3 positions
-        shader_bilb.update_ssbo(1);   // animations indices
+        shader_bilb.update_ssbo(0); // vec3 positions
+        shader_bilb.update_ssbo(1); // animations indices
 
         /* Render here */
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);

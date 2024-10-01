@@ -376,9 +376,7 @@ Vec3 PlayerController::cast_shape(Vec3 inDirection, Vec3 inPosition)
     return result;
 }
 
-/// @brief 
-/// @param deltaTime
-void PlayerController::update(float deltaTime)
+bool PlayerController::groundCheck()
 {
 	// Get player position and adjust for capsule height
 	// Adjust this based on your player capsule's half-height
@@ -387,73 +385,139 @@ void PlayerController::update(float deltaTime)
     Vec3 start = position - Vec3(0.0f, cHalfHeight, 0.0f);  
     Vec3 end = start + Vec3(0.0f, -0.01f, 0.0f);
 	
-	isGrounded = cast_ray(start, end, nullptr);
+	return cast_ray(start, end, nullptr);
+}
 
-	// isGrounded = true;
-	if (isGrounded) 
+void PlayerController::setPlayerState()
+{
+	// state rules
+	isGrounded = groundCheck();
+	if(isGrounded) // grounded
 	{
-		velocity.SetY(0.0f);// Reset vertical velocity when grounded
-
-		// Handle jumping input (e.g., space bar)
-		if (pControllerI->isJumping) {
-			velocity.SetY(jumpForce);  // Apply jump force
-			cout << "j";
-		}
-		// only on mouse position change / controller changed mouse direction, update velocity!
-		if(pControllerI->mouseLeftDown && pControllerI->isMouseScreenDirty)
+		if(velocity == Vec3::sZero())
 		{
-			Vec3 direction = mouseScreenToWorld(pControllerI->mouseScreenPosition);
-			velocity.SetX(direction.GetX() * playerSpeed);
-			velocity.SetZ(direction.GetZ() * playerSpeed);
-			
-			cout << "w";
+			playerState = playerState::still;
 		}
-		if(!pControllerI->mouseLeftDown && velocity != Vec3::sZero())
+		else if(velocity.GetY() > 0) // grounded but velocity > 0 special case
 		{
-			velocity.SetX(0);
-			velocity.SetZ(0);
-			cout << "!";
+			// so close to the floor and the tick are the perfect moment we are jumping and grounded
+			playerState = playerState::jumping;
 		}
-	} 
-	else 
-	{
-		if(velocity.GetY() > 0.3f) // up velocity the > is when to start the double gravity
+		else if(velocity.GetX() != 0 || velocity.GetZ() != 0)
 		{
-			// Apply gravity if not grounded
-			velocity += Vec3(0.0f, cGravity * deltaTime , 0.0f);
+			playerState = playerState::running;
 		}
-		else // down velocity
+		else if(velocity.GetX() != 0 || velocity.GetY() != 0 || velocity.GetZ() != 0)
 		{
-			velocity += Vec3(0.0f, cGravityFall * deltaTime , 0.0f);
+			playerState = playerState::landed;
 		}
-		// Cap fall speed
-		if (velocity.GetY() < cMaxFallSpeed) 
+		else
 		{
-			velocity.SetY(cMaxFallSpeed);
-			cout << "falling" << endl;
+			throw std::runtime_error("Error is player update logic");
 		}
 	}
-	
-	if(velocity != Vec3::sZero())
+	else // falling or jumping
+	{
+		// we are headed upwards
+		if(position.GetY() > prevPosition.GetY())
+		{
+			playerState = playerState::jumping;
+		}
+		// we are headed downloads
+		else if(position.GetY() <= prevPosition.GetY())
+		{
+			playerState = playerState::falling;
+		}
+		// we might ave just landed
+		else
+		{
+			throw std::runtime_error("Error is player update logic");
+		}
+	}
+}
+
+void PlayerController::setVelocity(float deltaTime)
+{
+	// state reaction
+	if(playerState == playerState::still)
+	{
+		velocity.SetY(0);
+	}
+	if(playerState == playerState::running)
+	{
+		velocity.SetY(0);
+	}
+	if(playerState == playerState::jumping)
+	{
+		velocity += Vec3(0.0f, cGravity * deltaTime , 0.0f);
+	}
+	if(playerState == playerState::falling)
+	{
+		// Apply gravity if not grounded
+		velocity += Vec3(0.0f, cGravityFall * deltaTime , 0.0f);
+	}
+	if(playerState == playerState::landed)
+	{
+		velocity.SetY(0);
+	}
+}
+
+void PlayerController::update(float deltaTime)
+{
+	setPlayerState();
+
+	// cout << endl;
+	// cout << "prevVelocity:" << prevVelocity << endl;
+	// cout << "velocity:" << velocity << endl;
+	// cout << endl;
+
+	prevVelocity = velocity;
+	prevPosition = position;
+
+	setVelocity(deltaTime);
+
+	// controls:
+	//================================
+
+	if (pControllerI->isJumping && playerState != playerState::jumping && isGrounded) {
+		velocity.SetY(jumpForce);  // Apply jump force
+	}
+
+	// only on mouse position change / controller changed mouse direction, update velocity!
+	if( (pControllerI->mouseLeftDown && pControllerI->isMouseScreenDirty) 
+		|| (pControllerI->mouseLeftDown && !pControllerI->isMouseScreenDirty && playerState == playerState::still) )
+	{
+		Vec3 direction = mouseScreenToWorld(pControllerI->mouseScreenPosition);
+		velocity.SetX(direction.GetX() * playerSpeed);
+		velocity.SetZ(direction.GetZ() * playerSpeed);
+	}
+
+	if(!pControllerI->mouseLeftDown && playerState == playerState::running)
+	{
+		velocity.SetX(0);
+		velocity.SetZ(0);
+	}
+
+	// update
+	if(playerState != playerState::error)
 	{
 		position -= cast_shape(velocity, position); // collision resolution
 		position += velocity * deltaTime; // Update player position based on velocity
+	
+		// !bug? having joly interface inside the velocity != zero causes strange physics behaviour
+		// Move the player body
+		pJolt->interface->MoveKinematic(bodyID, position, Quat::sIdentity(), deltaTime);
 	}
-
-	// !bug? having joly interface inside the velocity != zero causes strange physics behaviour
-	// Move the player body
-	pJolt->interface->MoveKinematic(bodyID, position, Quat::sIdentity(), deltaTime);
-
 }
 
-animState PlayerController::getPlayerState()
-{
-	// playerState_dirty = false;
-    return playerState;
-}
+// animState PlayerController::getPlayerState()
+// {
+// 	// playerState_dirty = false;
+//     return playerState;
+// }
 
-void PlayerController::setPlayerState(vec2 direction, float allowance)
-{
+// void PlayerController::setPlayerState(vec2 direction, float allowance)
+// {
 	// animState temp;
 	// // playerState_dirty = true;
 	// if(direction.y >= allowance)
@@ -541,7 +605,7 @@ void PlayerController::setPlayerState(vec2 direction, float allowance)
 	// 	}
 	// 	// cout << "change state" << endl;
 	// }
-}
+// }
 
 // Function to print a single RMat44 matrix
 void console_RMat44(const RMat44& mat) {
