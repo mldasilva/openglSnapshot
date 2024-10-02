@@ -409,6 +409,7 @@ void PlayerController::setPlayerState()
 		}
 		else if(velocity.GetX() != 0 || velocity.GetY() != 0 || velocity.GetZ() != 0)
 		{
+			// todo prev ground ? if not ground bvut now grounded we've landed
 			ePlayerState = playerState::landed;
 		}
 		else
@@ -492,8 +493,6 @@ void PlayerController::update(float deltaTime)
 		Vec3 direction = mouseScreenToWorld(pControllerI->mouseScreenPosition);
 		velocity.SetX(direction.GetX() * playerSpeed);
 		velocity.SetZ(direction.GetZ() * playerSpeed);
-
-		
 	}
 
 	if(!pControllerI->mouseLeftDown && ePlayerState == playerState::running)
@@ -545,7 +544,45 @@ void PlayerController::update(float deltaTime)
 		}
 	}
 
+	if(ePlayerState == playerState::still)
+	{
+		eAnimState = animState::a_still;
 
+		if(ePrevAnimState != eAnimState)
+		{
+			cout << "still animation" << endl;
+		}
+	}
+
+	if(ePlayerState == playerState::jumping)
+	{
+		eAnimState = animState::a_jumping;
+		
+		if(ePrevAnimState != eAnimState)
+		{
+			cout << "jumping animation" << endl;
+		}
+	}
+
+	if(ePlayerState == playerState::falling)
+	{
+		eAnimState = animState::a_falling;
+		
+		if(ePrevAnimState != eAnimState)
+		{
+			cout << "falling animation" << endl;
+		}
+	}
+
+	if(ePlayerState == playerState::landed)
+	{
+		eAnimState = animState::a_landed;
+		
+		if(ePrevAnimState != eAnimState)
+		{
+			cout << "landed animation" << endl;
+		}
+	}
 
 	// update
 	if(ePlayerState != playerState::error)

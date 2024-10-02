@@ -459,9 +459,6 @@ class PlayerController {
 		PlayerController(JoltWrapper *inJolt, Animator *inAnimator, controllerI *inControllerI, cameraI *inCameraI, Vec3 inPosition);
 		
 		void update(float deltaTime);
-
-		// animState getPlayerState();
-		// void setPlayerState(vec2 direction, float allowance);
 };
 
 void console_RMat44(const JPH::RMat44& mat);
