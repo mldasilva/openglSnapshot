@@ -36,10 +36,6 @@
 // know issue:
 // dragging window freezes game and messes up deltatime
 // multiple different functions to open files to strings
-#include <iostream>
-#include <vector>
-#include <functional>
-#include <algorithm>
 
 int main(void)
 {
