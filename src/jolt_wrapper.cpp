@@ -100,7 +100,7 @@ void JoltWrapper::update()
 	
 }
 
-BodyID JoltWrapper::create_object(RenderPool& render, objectType inType, modelI &inModel, RVec3Arg inPosition, QuatArg inRot)
+BodyID JoltWrapper::create_object(RenderPool& render, objectType inType, modelI inModel, RVec3Arg inPosition, QuatArg inRot)
 {
 	cout << " created object" << endl;
 	BodyID result;

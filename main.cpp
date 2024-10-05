@@ -7,7 +7,7 @@
 #include "scene.h"
 #include "gl_shaders.h"
 #include "jolt_wrapper.h"
-#include "imGui_wrapper.h"
+// #include "imGui_wrapper.h"
 
 //big things:
 // ---------------
@@ -79,7 +79,7 @@ int main(void)
 
     Camera          camera(width, height);
     Controller      controller(window, &camera);    // after camera
-    imGui_wrapper   imgui(window);                  // after controller
+    // imGui_wrapper   imgui(window);                  // after controller
 
     DaSilva::Shader          shader_main(shader_default_vs, shader_default_fs);
     DaSilva::RenderPool      render_main;
@@ -211,9 +211,9 @@ int main(void)
         shader_jolt.draw(camera, bo_jolt);  // physics objects
         shader_bilb.draw(camera, bo_player);  // billboards
 
-        imgui.start_frame();
-        imgui.demo(&imGuiHovered);
-        imgui.rendering();
+        // imgui.start_frame();
+        // imgui.demo(&imGuiHovered);
+        // imgui.rendering();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

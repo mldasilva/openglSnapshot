@@ -384,7 +384,7 @@ class JoltWrapper
 		void update();
 		// void updateKinematic(BodyID inBody, Vec3 inPosition, float deltaTime);
 		// BodyInterface& get_interface();
-		BodyID create_object(RenderPool& render, objectType inType, modelI &inModel, RVec3Arg inPosition, QuatArg inRot);
+		BodyID create_object(RenderPool& render, objectType inType, modelI inModel, RVec3Arg inPosition, QuatArg inRot);
 		BodyID create_shape(const Shape *inShape, bool isSensor, RVec3Arg inPosition, QuatArg inRotation = Quat::sIdentity(), 
 			EMotionType inMotionType = EMotionType::Static, 
 			ObjectLayer inObjectLayer = Layers::NON_MOVING, 

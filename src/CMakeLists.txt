@@ -54,13 +54,13 @@ target_include_directories(gl_shaders PUBLIC
 # imGui_wrapper
 # ==================================================
 
-add_library(imGui_wrapper STATIC imGui_wrapper.cpp)
+# add_library(imGui_wrapper STATIC imGui_wrapper.cpp)
 
-target_include_directories(imGui_wrapper PUBLIC 
-    ${CMAKE_SOURCE_DIR}/lib
-    ${CMAKE_SOURCE_DIR}/lib/imgui
-    ${CMAKE_SOURCE_DIR}/lib/imgui/backends
-)
+# target_include_directories(imGui_wrapper PUBLIC 
+#     ${CMAKE_SOURCE_DIR}/lib
+#     ${CMAKE_SOURCE_DIR}/lib/imgui
+#     ${CMAKE_SOURCE_DIR}/lib/imgui/backends
+# )
 
 # ==================================================
 # model
@@ -77,7 +77,7 @@ target_include_directories(model PUBLIC
 # jolt wrapper
 # ==================================================
 
-include(${CMAKE_SOURCE_DIR}/lib/jolt/Jolt/jolt.cmake)
+# include(${CMAKE_SOURCE_DIR}/lib/jolt/Jolt/jolt.cmake)
 
 add_library(jolt_wrapper STATIC jolt_wrapper.cpp)
 

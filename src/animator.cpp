@@ -26,7 +26,7 @@ void Animator::setAnimation(string name, uint index)
         return;
     }
 
-    auto& um = animations.find(name);    
+    const auto& um = animations.find(name);
 
     if (um != animations.end()) 
     {

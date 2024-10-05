@@ -23,7 +23,7 @@ class Scene{
 
         int find(string name)
         {
-            auto& um = map.find(name);
+            const auto& um = map.find(name);
             
             if (um != map.end()) 
             {
@@ -41,7 +41,7 @@ class Scene{
 
         vec3 fetch(string name)
         {
-            auto& um = map.find(name);
+            const auto& um = map.find(name);
             if (um != map.end()) 
             {
                 // Key found

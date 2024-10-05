@@ -13,12 +13,12 @@ add_executable(isometric_plus main.cpp)
 
 # Suppress LNK4099 warning glfw debug information 
 # because cmake running in Debug but pdb not provided
-target_link_options(isometric_plus PRIVATE /IGNORE:4099)
+# target_link_options(isometric_plus PRIVATE /IGNORE:4099) # windows requirement?
 
 # Add subdirectory
 add_subdirectory(lib/glm)
-add_subdirectory(lib/imgui)
-add_subdirectory(lib/imgui/backends)
+# add_subdirectory(lib/imgui)
+# add_subdirectory(lib/imgui/backends)
 add_subdirectory(lib/stb)
 add_subdirectory(src)
 
@@ -26,8 +26,8 @@ add_subdirectory(src)
 target_include_directories(${PROJECT_NAME} PUBLIC 
     ${CMAKE_SOURCE_DIR}/lib 
     ${CMAKE_SOURCE_DIR}/lib/glm
-    ${CMAKE_SOURCE_DIR}/lib/imgui
-    ${CMAKE_SOURCE_DIR}/lib/imgui/backends
+    # ${CMAKE_SOURCE_DIR}/lib/imgui
+    # ${CMAKE_SOURCE_DIR}/lib/imgui/backends
     ${CMAKE_SOURCE_DIR}/lib/json
     ${CMAKE_SOURCE_DIR}/lib/stb
     ${CMAKE_SOURCE_DIR}/src
@@ -42,16 +42,18 @@ find_package(OpenGL REQUIRED)
 # Link libraries (link glfw3 only once)
 target_link_libraries(${PROJECT_NAME} PUBLIC 
     OpenGL::GL 
-    glfw3 
-    glew32s
-    imgui
-    imgui_demo
-    imgui_draw
-    imgui_tables
-    imgui_widgets
-    imGui_wrapper
-    imgui_impl_glfw
-    imgui_impl_opengl3
+    # glfw3 
+    # glew32s
+    glfw
+    GLEW
+    # imgui
+    # imgui_demo
+    # imgui_draw
+    # imgui_tables
+    # imgui_widgets
+    # imGui_wrapper
+    # imgui_impl_glfw
+    # imgui_impl_opengl3
     stb_image
     camera
     controller
