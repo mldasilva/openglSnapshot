@@ -5,7 +5,6 @@
 #pragma once
 
 // Project includes
-
 #include <Jolt/Core/Core.h>
 #include <Jolt/Core/ARMNeon.h>
 #include <Jolt/Core/Memory.h>

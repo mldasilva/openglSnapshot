@@ -23,7 +23,6 @@ void main()
 {
     // FragColor = vec4(1,0,0,1);
     // FragColor = texture(u_textureSampler, in_texCoord);
+
     FragColor = texture(sampler2D(handles[0]), in_texCoord);
-    
-    
 };

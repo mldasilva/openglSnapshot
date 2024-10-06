@@ -36,8 +36,6 @@ namespace DaSilva{
             vector<void*> ssbo_map;
 
         public:
-            
-
             Shader(const char* vertexPath, const char* fragmentPath);
             ~Shader();
 

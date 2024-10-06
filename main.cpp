@@ -34,9 +34,11 @@
 // cards/spells have random attributes like equipment
 
 // know issue:
-// dragging window freezes game and messes up deltatime
-// multiple different functions to open files to strings
-
+// 1) dragging window freezes game and messes up deltatime
+// 2) multiple different functions to open files to strings
+// 3) wayland on linux nvidia card "failed to load plugin" libdecor-gtk.so: failed to init"
+// https://stackoverflow.com/questions/77739428/how-to-compile-an-opengl-project-in-cmake-in-wayland-desktop-environment
+// echo $XDG_SESSION_TYPE
 int main(void)
 {
     GLFWwindow* window;
@@ -47,7 +49,7 @@ int main(void)
     glfw_hints();
 
     /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(1280, 720, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(1280, 720, "Hello World", nullptr, nullptr);
     if (!window)
     {
         glfwTerminate();
@@ -73,13 +75,21 @@ int main(void)
 
     init_glfw_debugger(window);
 
+    // Check if bindless textures are supported
+    if (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64")) {
+        std::cout << "Bindless textures are supported on this system!" << std::endl;
+    } else {
+        std::cout << "Bindless textures are NOT supported on this system." << std::endl;
+        return -1;
+    }
+
     // ===============================================================
     // main
     // ===============================================================
 
     Camera          camera(width, height);
     Controller      controller(window, &camera);    // after camera
-    // imGui_wrapper   imgui(window);                  // after controller
+    // imGui_wrapper   imgui(window);               // after controller
 
     DaSilva::Shader          shader_main(shader_default_vs, shader_default_fs);
     DaSilva::RenderPool      render_main;

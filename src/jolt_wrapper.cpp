@@ -540,6 +540,8 @@ void PlayerController::update(float deltaTime)
 				case animState::a_downRight:
 					cout << "down right" << endl;
 					break;
+				default:
+					break;
 			}
 		}
 	}
