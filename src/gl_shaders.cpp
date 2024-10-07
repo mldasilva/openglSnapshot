@@ -170,6 +170,8 @@ void DaSilva::Shader::draw(Camera& camera, BufferObject& buffer)
     glUniformMatrix4fv(get_uniform_location("u_view"), 1, GL_FALSE, glm::value_ptr(camera.view));
     glUniformMatrix4fv(get_uniform_location("u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projection));
     
+    glUniform1i(get_uniform_location("u_textureSampler"), 0); // test for sampler2d non bindless texture alternative
+
     glBindVertexArray(buffer.VAO);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer.indirectBuffer);
     glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, buffer.commandCount, sizeof(DrawElementsIndirectCommand));

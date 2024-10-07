@@ -381,7 +381,7 @@ class JoltWrapper
 
 		void joltRegister();
 		void joltUnregister();
-		void update();
+		void update(float deltaTime);
 		// void updateKinematic(BodyID inBody, Vec3 inPosition, float deltaTime);
 		// BodyInterface& get_interface();
 		BodyID create_object(RenderPool& render, objectType inType, modelI inModel, RVec3Arg inPosition, QuatArg inRot);

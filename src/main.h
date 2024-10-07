@@ -32,6 +32,8 @@ using namespace std;
 #define shader_bb_vs        (string(SHADER_DIR) + "/default_bb.vs").c_str()
 #define shader_bb_fs        (string(SHADER_DIR) + "/default_bb.fs").c_str()
 
+#define shader_nBindless_fs (string(SHADER_DIR) + "/nBindless.fs").c_str()
+
 // ===============================================================
 // models
 // ===============================================================

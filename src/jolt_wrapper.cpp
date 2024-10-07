@@ -65,10 +65,10 @@ void JoltWrapper::joltUnregister()
 }
 
 
-void JoltWrapper::update()
+void JoltWrapper::update(float deltaTime)
 {
-	// Step the world
-	ps.Update(cDeltaTime, cCollisionSteps, temp_allocator_ptr, job_system_ptr);
+	// Step the world // was cDeltaTime no longer constant, this was stutter bug
+	ps.Update(deltaTime, cCollisionSteps, temp_allocator_ptr, job_system_ptr);
 
 	int i = 0;
 	for (const auto& bodyID : bodyIDs)
@@ -491,8 +491,11 @@ void PlayerController::update(float deltaTime)
 		|| (pControllerI->mouseLeftDown && !pControllerI->isMouseScreenDirty && ePlayerState == playerState::still) )
 	{
 		Vec3 direction = mouseScreenToWorld(pControllerI->mouseScreenPosition);
+		
 		velocity.SetX(direction.GetX() * playerSpeed);
 		velocity.SetZ(direction.GetZ() * playerSpeed);
+
+		// cout << direction << endl;
 	}
 
 	if(!pControllerI->mouseLeftDown && ePlayerState == playerState::running)

@@ -14,7 +14,6 @@
 // lights
 // shadows
 // wfc - wave function collapse
-// sprite / billboard
 
 //smaller things:
 //------------------
@@ -39,6 +38,10 @@
 // 3) wayland on linux nvidia card "failed to load plugin" libdecor-gtk.so: failed to init"
 // https://stackoverflow.com/questions/77739428/how-to-compile-an-opengl-project-in-cmake-in-wayland-desktop-environment
 // echo $XDG_SESSION_TYPE
+// 4) player stuttering on low end machine, especially when youtube is running or other high required programs
+// maybe the player physics scene position get out of sync
+// Try decoupling your physics updates from rendering (fixed timestep for physics).
+// 
 int main(void)
 {
     GLFWwindow* window;
@@ -65,9 +68,10 @@ int main(void)
 
     bool imGuiHovered = false;
 
+    bool bindless_supported = false;
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsync
+    glfwSwapInterval(0); // Enable vsync
 
     /*m: init glew required to be after glfwMakeContextCurrent()
     glew site: First you need to create a valid OpenGL rendering context and call glewInit() to initialize the extension entry points*/ 
@@ -78,9 +82,10 @@ int main(void)
     // Check if bindless textures are supported
     if (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64")) {
         std::cout << "Bindless textures are supported on this system!" << std::endl;
+        bindless_supported = true;
     } else {
         std::cout << "Bindless textures are NOT supported on this system." << std::endl;
-        return -1;
+        bindless_supported = false;
     }
 
     // ===============================================================
@@ -91,13 +96,24 @@ int main(void)
     Controller      controller(window, &camera);    // after camera
     // imGui_wrapper   imgui(window);               // after controller
 
-    DaSilva::Shader          shader_main(shader_default_vs, shader_default_fs);
+    string fs1 = string(shader_default_fs);
+    string fs2 = string(shader_jolt_fs);
+    string fs3 = string(shader_bb_fs);
+
+    if(!bindless_supported)
+    {
+        fs1 = string(shader_nBindless_fs);
+        fs2 = string(shader_nBindless_fs);
+        fs3 = string(shader_nBindless_fs);
+    }
+
+    DaSilva::Shader          shader_main(shader_default_vs, fs1.c_str());
     DaSilva::RenderPool      render_main;
 
-    DaSilva::Shader          shader_jolt(shader_jolt_vs, shader_jolt_fs);
+    DaSilva::Shader          shader_jolt(shader_jolt_vs, fs2.c_str());
     DaSilva::RenderPool      render_jolt;
 
-    DaSilva::Shader          shader_bilb(shader_bb_vs, shader_bb_fs);
+    DaSilva::Shader          shader_bilb(shader_bb_vs, fs3.c_str());
     DaSilva::RenderPool      render_bilb;
 
     JoltWrapper     jolt; // Now we can create the actual physics system.
@@ -115,11 +131,11 @@ int main(void)
 
     render_main.insert(cone.vertices, cone.indices, vec3(0, -1, 0));
     
-    for (size_t i = 0; i < 10; i++)
-    {
-        /* code */
-        jolt.create_object(render_jolt, enviroment_dynamic, cube.getInterface(), Vec3((i*2), 5, 0), Quat::sIdentity());
-    }
+    // for (size_t i = 0; i < 10; i++)
+    // {
+    //     /* code */
+    //     jolt.create_object(render_jolt, enviroment_dynamic, cube.getInterface(), Vec3((i*2), 5, 0), Quat::sIdentity());
+    // }
       
     // floor
     BodyID floor = jolt.create_shape(new BoxShape(Vec3(100.0f, 1.0f, 100.0f)), false, Vec3(0.0, -1.0, 0.0));
@@ -136,8 +152,16 @@ int main(void)
     // ===============================================================
     
     DaSilva::Texture textures;
-    textures.loadTexture(texture_anim_00);  // texture index 0
-    textures.loadTexture(texture_dice);     // texture index 1
+    if(bindless_supported)
+    {
+        textures.loadTexture(texture_anim_00);  // texture index 0
+        textures.loadTexture(texture_dice);     // texture index 1
+    }
+    else
+    {
+        textures.loadTexture(texture_anim_00, 0);  // texture index 0
+        textures.loadTexture(texture_dice, 1);     // texture index 1
+    }
 
     // ===============================================================
     // blending settings
@@ -180,7 +204,17 @@ int main(void)
 	jolt.optimize();
 
     shader_main.    create_ssbo(0, render_main.getBufferSize(), render_main.getBufferData());
-    shader_main.    create_ssbo(2, textures.getBufferSize(),    textures.getBufferData());
+    if(bindless_supported)
+    {
+        shader_main.create_ssbo(2, textures.getBufferSize(), textures.getBufferData());
+    }
+    else
+    {
+        shader_main.set_uniform_location("u_textureSampler");
+        shader_jolt.set_uniform_location("u_textureSampler");
+        shader_bilb.set_uniform_location("u_textureSampler");
+        cout << " set up texture sampler" << endl;
+    }
     BufferObject    bo_main(render_main);
 
     shader_jolt.    create_ssbo(1, jolt.getBufferSize(),        jolt.getBufferData());
@@ -192,21 +226,23 @@ int main(void)
 
     std::cout << "hello world.." << std::endl;
 
+    // return -1;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
         lastTick = currentTime;
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTick;
+        // deltaTime = fmax(currentTime - lastTick, 0.001f);
 
-        /* controls here */     
         controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
-        playerController.   update(deltaTime); // player controller
-        camera.             moveTo(v(playerController.position));
-        scene.update(0, v(playerController.position)); // update the first billboard
-        
+        playerController.   update(deltaTime);     // Update player first
+        scene.              update(0, v(playerController.position)); // Update billboard
+        camera.             moveTo(v(playerController.position));   // Move camera to player's new position
+
+        // cout << deltaTime << endl;
         /* physics */
-        jolt.update(); // physics tick
+        jolt.update(deltaTime); // physics tick
         animator.update(deltaTime);
 
         shader_jolt.update_ssbo(0); // matrices
@@ -217,9 +253,9 @@ int main(void)
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        shader_main.draw(camera, bo_main);       // render only insert into render
-        shader_jolt.draw(camera, bo_jolt);  // physics objects
-        shader_bilb.draw(camera, bo_player);  // billboards
+        shader_main.draw(camera, bo_main);      // render only insert into render
+        shader_jolt.draw(camera, bo_jolt);      // physics objects
+        shader_bilb.draw(camera, bo_player);    // billboards
 
         // imgui.start_frame();
         // imgui.demo(&imGuiHovered);

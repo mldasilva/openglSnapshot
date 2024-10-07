@@ -219,13 +219,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_SOURCE_DIR}/lib/json
     ${CMAKE_SOURCE_DIR}/lib/stb
     ${CMAKE_SOURCE_DIR}/src
-    # ${CMAKE_SOURCE_DIR}/lib/jolt
 )
 
 # Add the directory where the .lib file is located
 target_link_directories(${PROJECT_NAME} PUBLIC 
     ${CMAKE_SOURCE_DIR}/lib
-    # ${CMAKE_SOURCE_DIR}/lib/jolt/build
 )
 
 # -lopengl32

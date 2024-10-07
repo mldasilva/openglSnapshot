@@ -1,5 +1,5 @@
 #version 460 core
-// #extension GL_ARB_bindless_texture : enable
+#extension GL_ARB_bindless_texture : enable
 #extension GL_ARB_gpu_shader_int64 : enable
 
 //ssbo input
