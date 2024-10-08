@@ -245,6 +245,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     Jolt
     jolt_wrapper
     animator
+	wfc
 )
 
 # Define the resource path at configure time

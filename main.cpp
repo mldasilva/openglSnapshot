@@ -7,6 +7,7 @@
 #include "scene.h"
 #include "gl_shaders.h"
 #include "jolt_wrapper.h"
+#include "wfc.h"
 // #include "imGui_wrapper.h"
 
 //big things:
@@ -79,6 +80,17 @@ int main(void)
 
     init_glfw_debugger(window);
 
+
+
+    WfcTiled world(12,8);
+
+
+
+    world.printArray();
+
+    cout << "value:" << world.getValue(44,3) << endl;
+
+    return 0;
     // Check if bindless textures are supported
     if (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64")) {
         std::cout << "Bindless textures are supported on this system!" << std::endl;

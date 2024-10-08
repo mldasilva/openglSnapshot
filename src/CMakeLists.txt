@@ -90,3 +90,12 @@ target_include_directories(jolt_wrapper PUBLIC
 # have to link it if using compiled library
 target_link_libraries(jolt_wrapper PRIVATE Jolt)  # Link against the Jolt Physics shared library
 
+# ==================================================
+# wfc
+# ==================================================
+
+add_library(wfc STATIC wfc.cpp)
+
+target_include_directories(wfc PUBLIC
+    ${CMAKE_SOURCE_DIR}/lib/glm
+)
