@@ -9,7 +9,7 @@
 #include "jolt_wrapper.h"
 #include "wfc.h"
 // #include "imGui_wrapper.h"
-
+#include <vector>
 //big things:
 // ---------------
 // lights
@@ -81,16 +81,16 @@ int main(void)
     init_glfw_debugger(window);
 
 
+    WfcTiled world(120,90);
+    // world.printIndices();
+    world.generate();
 
-    WfcTiled world(12,8);
+    world.printValues();
 
-
-
-    world.printArray();
-
-    cout << "value:" << world.getValue(44,3) << endl;
+    
 
     return 0;
+
     // Check if bindless textures are supported
     if (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64")) {
         std::cout << "Bindless textures are supported on this system!" << std::endl;
