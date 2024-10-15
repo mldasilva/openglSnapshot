@@ -6,7 +6,8 @@ WfcTiled::WfcTiled(int row, int col) : maxIndex(row * col), maxRows(row), maxCol
     tiles.resize(maxIndex);
     initArray();
 
-    weights = {{hole, 5},{land, 75},{water, 20}};
+    weights[0] = {{hole, 5},{land, 75},{water, 20}}; // default preset
+    weights[1] = {{hole, 40},{land, 50},{water, 10}};// edge preset
 
     // rules
     adjacencyRules[unassigned]      = set<tileTypes>({hole, land, water});
@@ -19,7 +20,8 @@ WfcTiled::WfcTiled(int row, int col) : maxIndex(row * col), maxRows(row), maxCol
 void WfcTiled::initArray() {
     for (int i = 0; i < tiles.size(); i++) {
         tiles[i].index = i;
-        tiles[i].entropy = MAX_ENTROPY;
+        tiles[i].row = i / maxCols;
+        tiles[i].col = i % maxCols;
 
         tiles[i].nNorth = getNorth(i);
         tiles[i].nEast  = getEast(i);
@@ -30,6 +32,16 @@ void WfcTiled::initArray() {
         tiles[i].nNEast = getNorthEast(i);
         tiles[i].nSWest = getSouthWest(i);
         tiles[i].nSEast = getSouthEast(i);
+        
+        if(tiles[i].nNorth == nullptr || tiles[i].nEast == nullptr || 
+            tiles[i].nSouth == nullptr || tiles[i].nWest == nullptr)
+        {
+            tiles[i].tilePiece = edge;
+        }
+        else
+        {
+            tiles[i].tilePiece = center;
+        }
     }
 }
 
@@ -257,30 +269,28 @@ void WfcTiled::generateTile(wfcTile* tile, mt19937& engine)
     // uniform_int_distribution<> distr(1, 100);
     // int indexSelection = distr(engine);
     // tile->tileType = vectorRules[indexSelection % validOptions.size()];
+    
+    // special cause with heigher chance of hole on edges
+    int weightPresets = 0;
+    if(tile->tilePiece == edge)
+    {
+        weightPresets = 1;
+    }
 
-
-    tileTypes potentialTileType = rndWeighted(engine, weights);
-    // while validOptions doesnt contain a randomly seleted weighted tile
+    tileTypes potentialTileType = rndWeighted(engine, weights[weightPresets]);
+    // while validOptions doesnt contain a randomly selected weighted tile
     while (validOptions.find(potentialTileType) == validOptions.end()) 
     {
-        potentialTileType = rndWeighted(engine, weights);
+        potentialTileType = rndWeighted(engine, weights[weightPresets]);
     } 
     tile->tileType = potentialTileType;
-}
+} 
 
 void WfcTiled::generate()
 {
     // Create a random number generator
     random_device rd;  // Seed for random number engine
     mt19937 gen(rd()); // Mersenne Twister engine
-    
-    // Define the distribution: numbers from 0 to range_upper_limit-1
-    // uniform_int_distribution<> distr(0, maxIndex - 1);
-
-    // Generate the random number for first tile
-    // int indexSelection = distr(gen);
-    
-    // nextTiles.push_back(&tiles[indexSelection]);
 
     for(int i = 0; i < maxIndex; i++)
     {
@@ -288,7 +298,6 @@ void WfcTiled::generate()
         generateTile(&tiles[i], gen);
 
         // testing:
-
         // std::this_thread::sleep_for(std::chrono::milliseconds(250));
 
         // std::system("clear");

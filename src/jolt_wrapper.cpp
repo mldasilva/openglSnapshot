@@ -516,32 +516,32 @@ void PlayerController::update(float deltaTime)
 
 		if(ePrevAnimState != eAnimState)
 		{
-			cout << "running: ";
+			// cout << "running: ";
 			switch(eAnimState)
 			{	
 				case animState::a_up:
-					cout << "up" << endl;
+					// cout << "up" << endl;
 					break;
 				case animState::a_left:
-					cout << "left" << endl;
+					// cout << "left" << endl;
 					break;
 				case animState::a_right:
-					cout << "right" << endl;
+					// cout << "right" << endl;
 					break;
 				case animState::a_down:
-					cout << "down" << endl;
+					// cout << "down" << endl;
 					break;
 				case animState::a_upLeft:
-					cout << "up left" << endl;
+					// cout << "up left" << endl;
 					break;
 				case animState::a_upRight:
-					cout << "up right" << endl;
+					// cout << "up right" << endl;
 					break;
 				case animState::a_downLeft:
-					cout << "down left" << endl;
+					// cout << "down left" << endl;
 					break;
 				case animState::a_downRight:
-					cout << "down right" << endl;
+					// cout << "down right" << endl;
 					break;
 				default:
 					break;
@@ -555,7 +555,7 @@ void PlayerController::update(float deltaTime)
 
 		if(ePrevAnimState != eAnimState)
 		{
-			cout << "still animation" << endl;
+			// cout << "still animation" << endl;
 		}
 	}
 
@@ -565,7 +565,7 @@ void PlayerController::update(float deltaTime)
 		
 		if(ePrevAnimState != eAnimState)
 		{
-			cout << "jumping animation" << endl;
+			// cout << "jumping animation" << endl;
 		}
 	}
 
@@ -575,7 +575,7 @@ void PlayerController::update(float deltaTime)
 		
 		if(ePrevAnimState != eAnimState)
 		{
-			cout << "falling animation" << endl;
+			// cout << "falling animation" << endl;
 		}
 	}
 
@@ -585,7 +585,7 @@ void PlayerController::update(float deltaTime)
 		
 		if(ePrevAnimState != eAnimState)
 		{
-			cout << "landed animation" << endl;
+			// cout << "landed animation" << endl;
 		}
 	}
 

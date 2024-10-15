@@ -15,13 +15,12 @@
 // lights
 // shadows
 // wfc - wave function collapse
-
-//smaller things:
-//------------------
+// ui
 // skills, abilities
 // quest
 // ai
 // combat
+
 
 // huge things:
 //------------------
@@ -81,16 +80,6 @@ int main(void)
     init_glfw_debugger(window);
 
 
-    WfcTiled world(120,90);
-    // world.printIndices();
-    world.generate();
-
-    world.printValues();
-
-    
-
-    return 0;
-
     // Check if bindless textures are supported
     if (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64")) {
         std::cout << "Bindless textures are supported on this system!" << std::endl;
@@ -141,8 +130,19 @@ int main(void)
     // test world scene
     // ===============================================================
 
+    WfcTiled world(15,9);
+    world.generate();
     render_main.insert(cone.vertices, cone.indices, vec3(0, -1, 0));
-    
+    for(const auto tile : world.tiles)
+    {
+        if(tile.tileType == land || tile.tileType == water)
+        {
+            // render_main.insert(cube.vertices, cube.indices, vec3(tile.col * 2, -1, tile.row * 2));
+            jolt.create_object(render_jolt, enviroment_static, cube.getInterface(), Vec3(tile.col * 2, -1, tile.row * 2), Quat::sIdentity());
+
+        }
+    }
+    // world.printValues();
     // for (size_t i = 0; i < 10; i++)
     // {
     //     /* code */
@@ -150,7 +150,7 @@ int main(void)
     // }
       
     // floor
-    BodyID floor = jolt.create_shape(new BoxShape(Vec3(100.0f, 1.0f, 100.0f)), false, Vec3(0.0, -1.0, 0.0));
+    BodyID floor = jolt.create_shape(new BoxShape(Vec3(1.0f, 1.0f, 1.0f)), false, Vec3(0.0, -1.0, 0.0));
 
     jolt.create_object(render_jolt, enviroment_static, cube.getInterface(), Vec3(3, 1, 3), Quat::sIdentity());
     jolt.create_object(render_jolt, enviroment_static, cube.getInterface(), Vec3(0.5f, 1, 3), Quat::sIdentity());
@@ -195,7 +195,7 @@ int main(void)
     animator.setAnimation("hello1", 2);
    
     Scene scene;
-    scene.add("player1", vec3(-3.0f,10.0f,0.0f));
+    scene.add("player1", vec3(5.0f,10.0f,5.0f));
     scene.add("enemy01", vec3(-3.0f,10.0f,5.0f));
     scene.add("enemy02", vec3(15.0f,10.0f,0.0f));
     
@@ -236,9 +236,6 @@ int main(void)
     shader_bilb.    create_ssbo(7, animator.getBufferSize(),    animator.getBufferData());
     BufferObject    bo_player(render_bilb);
 
-    std::cout << "hello world.." << std::endl;
-
-    // return -1;
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {

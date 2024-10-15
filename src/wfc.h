@@ -14,9 +14,12 @@
 #include <chrono>
 #include <thread>
 
-#define MAX_ENTROPY 4 // 4 tileTypes
 using namespace std;
 
+enum tilePieceType
+{
+    unknown, edge, center
+};
 
 enum tileTypes
 {
@@ -27,7 +30,11 @@ enum tileTypes
 struct wfcTile{
     int index = -1;
     int entropy = -1;
-    tileTypes tileType = unassigned;
+    int row = -1;
+    int col = -1;
+    
+    tilePieceType   tilePiece = unknown;
+    tileTypes       tileType  = unassigned;
 
     // neighbours
     wfcTile* nNorth; 
@@ -42,12 +49,12 @@ struct wfcTile{
 };
 
 // Custom comparator for descending order
-struct EntropyOrder {
-    bool operator()(const wfcTile& lhs, const wfcTile& rhs) const 
-    {
-        return lhs.entropy > rhs.entropy;
-    }
-};
+// struct EntropyOrder {
+//     bool operator()(const wfcTile& lhs, const wfcTile& rhs) const 
+//     {
+//         return lhs.entropy > rhs.entropy;
+//     }
+// };
 
 class WfcTiled{
     private:
@@ -65,12 +72,12 @@ class WfcTiled{
         wfcTile* getSouthWest(int index);
         wfcTile* getSouthEast(int index);
 
-        vector<pair<tileTypes, int>> weights;
+        unordered_map<int, vector<pair<tileTypes, int>>> weights;
         unordered_map<tileTypes, set<tileTypes>> adjacencyRules;
 
     public:
         vector<wfcTile> tiles;
-        vector<wfcTile*> nextTiles;
+        // vector<wfcTile*> nextTiles;
       
         WfcTiled(int row, int col);
 
