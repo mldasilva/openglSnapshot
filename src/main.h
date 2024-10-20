@@ -34,6 +34,9 @@ using namespace std;
 
 #define shader_nBindless_fs (string(SHADER_DIR) + "/nBindless.fs").c_str()
 
+#define UINB_fs (string(SHADER_DIR) + "/user_interface.fs").c_str()
+#define UINB_vs (string(SHADER_DIR) + "/user_interface.vs").c_str()
+
 // ===============================================================
 // models
 // ===============================================================

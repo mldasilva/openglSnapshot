@@ -82,7 +82,7 @@ vector<float> Model::get_floats(json accessor)
 	// Go over all the bytes in the data at the correct place using the properties from above
 	uint beginningOfData = byteOffset + accByteOffset;
 	uint lengthOfData = count * 4 * numPerVert;
-	for (uint i = beginningOfData; i < beginningOfData + lengthOfData; i)
+	for (uint i = beginningOfData; i < beginningOfData + lengthOfData;)
 	{
 		uchar bytes[] = { data[i++], data[i++], data[i++], data[i++] };
 		float value;
@@ -111,7 +111,7 @@ vector<uint> Model::get_indices(json accessor)
 	uint beginningOfData = byteOffset + accByteOffset;
 	if (componentType == 5125) // u int
 	{
-		for (uint i = beginningOfData; i < byteOffset + accByteOffset + count * 4; i)
+		for (uint i = beginningOfData; i < byteOffset + accByteOffset + count * 4;)
 		{
 			uchar bytes[] = { data[i++], data[i++], data[i++], data[i++] };
 			uint value;
@@ -121,7 +121,7 @@ vector<uint> Model::get_indices(json accessor)
 	}
 	else if (componentType == 5123) // u short
 	{
-		for (uint i = beginningOfData; i < byteOffset + accByteOffset + count * 2; i)
+		for (uint i = beginningOfData; i < byteOffset + accByteOffset + count * 2;)
 		{
 			uchar bytes[] = { data[i++], data[i++] };
 			ushort value;
@@ -131,7 +131,7 @@ vector<uint> Model::get_indices(json accessor)
 	}
 	else if (componentType == 5122) // short
 	{
-		for (uint i = beginningOfData; i < byteOffset + accByteOffset + count * 2; i)
+		for (uint i = beginningOfData; i < byteOffset + accByteOffset + count * 2;)
 		{
 			uchar bytes[] = { data[i++], data[i++] };
 			short value;
@@ -249,55 +249,4 @@ void Model::cout_indices()
     {
         cout << indices[i] << endl;
     }
-}
-
-Billboard::Billboard(float halfSize)
-{
-	// float vertexData[] = {
-    //     // positions          // colors           // texture coords
-    //     o,  o, 0.0f,   1.0f, 0.0f, 0.0f,   1.0f, 1.0f,   // top right
-    //     o, -o, 0.0f,   0.0f, 1.0f, 0.0f,   1.0f, 0.0f,   // bottom right
-    //     -o, -o, 0.0f,   0.0f, 0.0f, 1.0f,   0.0f, 0.0f,   // bottom left
-    //     -o,  o, 0.0f,   1.0f, 1.0f, 0.0f,   0.0f, 1.0f    // top left 
-    // };
-
-    // swapping order of indices draws the plane with the normal facing the camera 
-    // when the billboard shader is applied, so i no longer need to disable depth culling
-    // unsigned int indices[] = {  // note that we start from 0!
-    //     3,1,0,   // first triangle
-    //     3,2,1    // second triangle
-    // };
-
-	vertex ver;
-
-    indices.push_back(3);
-    indices.push_back(1);
-    indices.push_back(0);
-    indices.push_back(3);
-    indices.push_back(2);
-    indices.push_back(1);
-
-    ver.position = vec3(halfSize, halfSize, 0);
-    ver.normal = vec3(0,0,0);
-    ver.texUV = vec2(1.0, 1.0);
-
-    vertices.push_back(ver);
-
-    ver.position = vec3(halfSize, -halfSize, 0);
-    ver.normal = vec3(0,0,0);
-    ver.texUV = vec2(1.0, 0.0);
-
-    vertices.push_back(ver);
-
-    ver.position = vec3(-halfSize, -halfSize, 0);
-    ver.normal = vec3(0,0,0);
-    ver.texUV = vec2(0.0, 0.0);
-
-    vertices.push_back(ver);
-
-    ver.position = vec3(-halfSize, halfSize, 0);
-    ver.normal = vec3(0,0,0);
-    ver.texUV = vec2(0.0, 1.0);
-
-    vertices.push_back(ver);
 }

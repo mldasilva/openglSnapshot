@@ -48,14 +48,4 @@ public:
     void cout_vertices();
     void cout_indices(); 
 };
-
-class Billboard {
-public:
-    vector<vertex> vertices;
-	vector<uint> indices;
-
-    Billboard(float halfSize);
-
-    modelI getInterface();
-};
 #endif

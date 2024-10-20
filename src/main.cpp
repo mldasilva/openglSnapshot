@@ -1,6 +1,6 @@
 // #ifndef main_only
 // #define main_only
-#include <iostream>
+// #include <iostream>
 // #include "main.h"
 // #include "glmath.h"
 

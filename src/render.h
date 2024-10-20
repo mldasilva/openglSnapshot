@@ -59,6 +59,7 @@ namespace DaSilva{
 
             uint insert(vector<vertex> v, vector<uint> i, vec3 position);
             uint insert(vector<vertex> v, vector<uint> i, uint instanceCount);
+            
             RenderPool();
             ~RenderPool();
 
@@ -76,10 +77,13 @@ namespace DaSilva{
             uint indirectBuffer;
             uint commandCount;
 
-            BufferObject(RenderPool& renderPool); // short hand version
-            BufferObject(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& commands);
-            
+            BufferObject();
             ~BufferObject();
+
+            // needs init allowing for construct in other constructors without an initializer list
+            void init(RenderPool& renderPool); // short hand version
+            void init(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& commands);
+            
     };
 
 }

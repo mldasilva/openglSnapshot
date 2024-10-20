@@ -6,10 +6,14 @@
 //
 // =======================================================================================
 
-DaSilva::BufferObject::BufferObject(RenderPool &renderPool)
+DaSilva::BufferObject::BufferObject()
+{
+    cout << "creating buffer object..." << endl;
+}
+void DaSilva::BufferObject::init(RenderPool &renderPool)
 {
     // BufferObject(renderPool.vertices, 8, renderPool.indices, renderPool.commands);
-    cout << "creating buffer object..." << endl;
+    
     glGenVertexArrays(1, &VAO); 
     glBindVertexArray(VAO); 
     
@@ -49,7 +53,7 @@ DaSilva::BufferObject::BufferObject(RenderPool &renderPool)
     }
 }
 
-DaSilva::BufferObject::BufferObject(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& commands)
+void DaSilva::BufferObject::init(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& commands)
 {
     cout << "creating buffer object..." << endl;
     glGenVertexArrays(1, &VAO); 

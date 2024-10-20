@@ -45,6 +45,7 @@ namespace DaSilva{
             void triangle_debug();
             void set_uniform_location(const char *name);
             int get_uniform_location(const char *name);
+            uint getID();
     };
 
     class Texture{

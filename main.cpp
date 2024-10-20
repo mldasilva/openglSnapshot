@@ -8,14 +8,18 @@
 #include "gl_shaders.h"
 #include "jolt_wrapper.h"
 #include "wfc.h"
+#include "billboard.h"
+#include "user_interface.h"
 // #include "imGui_wrapper.h"
 #include <vector>
+
 //big things:
 // ---------------
 // lights
 // shadows
 // wfc - wave function collapse
 // ui
+
 // skills, abilities
 // quest
 // ai
@@ -95,7 +99,6 @@ int main(void)
 
     Camera          camera(width, height);
     Controller      controller(window, &camera);    // after camera
-    // imGui_wrapper   imgui(window);               // after controller
 
     string fs1 = string(shader_default_fs);
     string fs2 = string(shader_jolt_fs);
@@ -108,14 +111,16 @@ int main(void)
         fs3 = string(shader_nBindless_fs);
     }
 
-    DaSilva::Shader          shader_main(shader_default_vs, fs1.c_str());
-    DaSilva::RenderPool      render_main;
+    DaSilva::Shader         shader_main(shader_default_vs, fs1.c_str());
+    DaSilva::RenderPool     render_main;
 
-    DaSilva::Shader          shader_jolt(shader_jolt_vs, fs2.c_str());
-    DaSilva::RenderPool      render_jolt;
+    DaSilva::Shader         shader_jolt(shader_jolt_vs, fs2.c_str());
+    DaSilva::RenderPool     render_jolt;
 
-    DaSilva::Shader          shader_bilb(shader_bb_vs, fs3.c_str());
-    DaSilva::RenderPool      render_bilb;
+    DaSilva::Shader         shader_bilb(shader_bb_vs, fs3.c_str());
+    DaSilva::RenderPool     render_bilb;
+
+    MainUI                  userInterface(UINB_vs, UINB_fs, width, height);
 
     JoltWrapper     jolt; // Now we can create the actual physics system.
 
@@ -227,14 +232,19 @@ int main(void)
         shader_bilb.set_uniform_location("u_textureSampler");
         cout << " set up texture sampler" << endl;
     }
-    BufferObject    bo_main(render_main);
-
+    BufferObject    bo_main; 
+    bo_main.init(render_main);
+    
     shader_jolt.    create_ssbo(1, jolt.getBufferSize(),        jolt.getBufferData());
-    BufferObject    bo_jolt(render_jolt);
+    BufferObject    bo_jolt; 
+    bo_jolt.init(render_jolt);
 
     shader_bilb.    create_ssbo(4, scene.getBufferSize(),       scene.getBufferData());
     shader_bilb.    create_ssbo(7, animator.getBufferSize(),    animator.getBufferData());
-    BufferObject    bo_player(render_bilb);
+    BufferObject    bo_player; 
+    bo_player.init(render_bilb);
+
+    // note: shader binding 10 for user interface
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -258,6 +268,8 @@ int main(void)
         shader_bilb.update_ssbo(0); // vec3 positions
         shader_bilb.update_ssbo(1); // animations indices
 
+        
+
         /* Render here */
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -265,6 +277,8 @@ int main(void)
         shader_main.draw(camera, bo_main);      // render only insert into render
         shader_jolt.draw(camera, bo_jolt);      // physics objects
         shader_bilb.draw(camera, bo_player);    // billboards
+
+        userInterface.draw();                   // user interface
 
         // imgui.start_frame();
         // imgui.demo(&imGuiHovered);

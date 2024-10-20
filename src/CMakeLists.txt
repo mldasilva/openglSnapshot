@@ -62,6 +62,14 @@ target_include_directories(gl_shaders PUBLIC
 #     ${CMAKE_SOURCE_DIR}/lib/imgui/backends
 # )
 
+add_library(user_interface STATIC user_interface.cpp)
+
+target_include_directories(user_interface PUBLIC 
+    ${CMAKE_SOURCE_DIR}/lib
+    ${CMAKE_SOURCE_DIR}/lib/glm
+    ${CMAKE_SOURCE_DIR}/lib/stb
+)
+
 # ==================================================
 # model
 # ==================================================
@@ -71,6 +79,16 @@ add_library(model STATIC model.cpp)
 target_include_directories(model PUBLIC
     ${CMAKE_SOURCE_DIR}/lib/glm
     ${CMAKE_SOURCE_DIR}/lib/json
+)
+
+# ==================================================
+# model
+# ==================================================
+
+add_library(billboard STATIC billboard.cpp)
+
+target_include_directories(billboard PUBLIC
+    ${CMAKE_SOURCE_DIR}/lib/glm
 )
 
 # ==================================================
