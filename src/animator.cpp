@@ -97,7 +97,7 @@ void Animator::update(float deltaTime)
 
 void Animator::play(uint index, string name)
 {
-    auto um = animations.find(name);
+    // auto um = animations.find(name);
     // animations_play.insert({name, um->second});
 }
 

@@ -1,6 +1,9 @@
 #pragma once
 #include "glmath.h"
 
+/// @brief a struct with all the information formated be the controller for use with other classes
+///
+/// @usage: &controller.interface
 struct controllerI{
     // vec3 mouseWorldDirection; // world position
     // bool isMouseWorldDirty;

@@ -178,7 +178,7 @@ void DaSilva::Shader::draw(Camera& camera, BufferObject& buffer)
     glUniformMatrix4fv(get_uniform_location("u_view"), 1, GL_FALSE, glm::value_ptr(camera.view));
     glUniformMatrix4fv(get_uniform_location("u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projection));
     
-    glUniform1i(get_uniform_location("u_textureSampler"), 0); // test for sampler2d non bindless texture alternative
+    // glUniform1i(get_uniform_location("u_textureSampler"), 0); // test for sampler2d non bindless texture alternative
 
     glBindVertexArray(buffer.VAO);
     glBindBuffer(GL_DRAW_INDIRECT_BUFFER, buffer.indirectBuffer);
@@ -378,6 +378,49 @@ void DaSilva::Texture::loadTexture(const char * filepath)
 
     textureAddrIndex++;
     bindless_index++;
+}
+
+/// @brief can call only once per instance of object.
+/// 
+/// disadvantage vs bindless textures is Texture-Array require all textures to be the same size else result in seg fault
+/// @param filepaths 
+void DaSilva::Texture::loadTextureArray(string* filepaths)
+{
+    // GLuint textureArray;
+    glGenTextures(1, &textureArray);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
+
+    // Define the array size: width, height, and number of layers (textures)
+    int width = 1024; // Width of each texture
+    int height = 1024; // Height of each texture
+    int layers = filepaths->size();  // Number of textures
+    
+    glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, width, height, layers);  // Allocate storage
+
+    int temp_width, temp_height, temp_nrChannels;
+    
+    // Load each texture layer (assuming you have already loaded the texture data)
+    for (int i = 0; i < layers; ++i) {
+        // Assuming you have texture data in an array of textures:
+        stbi_set_flip_vertically_on_load(1);
+        unsigned char *data = stbi_load(filepaths[i].c_str(), &temp_width, &temp_height, &temp_nrChannels, 0);
+        glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        stbi_image_free(data);
+    }
+
+    // Set texture parameters (min/mag filtering, wrapping, etc.)
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+}
+
+void DaSilva::Texture::bindTextureArray(uint slot)
+{
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
 }
 
 GLuint64 *DaSilva::Texture::getBufferData()

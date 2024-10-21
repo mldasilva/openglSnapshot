@@ -117,3 +117,16 @@ add_library(wfc STATIC wfc.cpp)
 target_include_directories(wfc PUBLIC
     ${CMAKE_SOURCE_DIR}/lib/glm
 )
+
+# Define the resource path at configure time
+set(SHADER_DIR "${CMAKE_BINARY_DIR}/res/shaders")
+
+add_compile_definitions(SHADER_DIR="${SHADER_DIR}")
+
+set(MODELS_DIR "${CMAKE_BINARY_DIR}/res/models")
+
+add_compile_definitions(MODELS_DIR="${MODELS_DIR}")
+
+set(TEXTURES_DIR "${CMAKE_BINARY_DIR}/res/textures")
+
+add_compile_definitions(TEXTURES_DIR="${TEXTURES_DIR}")

@@ -1,6 +1,7 @@
 #include "main.h"
 // #include "glmath.h"
 
+#include "assets.h"
 #include "model.h"
 #include "controller.h"
 #include "animator.h"
@@ -19,6 +20,8 @@
 // shadows
 // wfc - wave function collapse
 // ui
+//  - button
+//  - hp bar
 
 // skills, abilities
 // quest
@@ -83,7 +86,6 @@ int main(void)
 
     init_glfw_debugger(window);
 
-
     // Check if bindless textures are supported
     if (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64")) {
         std::cout << "Bindless textures are supported on this system!" << std::endl;
@@ -120,7 +122,7 @@ int main(void)
     DaSilva::Shader         shader_bilb(shader_bb_vs, fs3.c_str());
     DaSilva::RenderPool     render_bilb;
 
-    MainUI                  userInterface(UINB_vs, UINB_fs, width, height);
+    MainUI                  userInterface(UINB_vs, UINB_fs, bindless_supported, &controller.interface);
 
     JoltWrapper     jolt; // Now we can create the actual physics system.
 
@@ -147,6 +149,7 @@ int main(void)
 
         }
     }
+
     // world.printValues();
     // for (size_t i = 0; i < 10; i++)
     // {
@@ -200,7 +203,7 @@ int main(void)
     animator.setAnimation("hello1", 2);
    
     Scene scene;
-    scene.add("player1", vec3(5.0f,10.0f,5.0f));
+    scene.add("player1", vec3(5.0f,1.0f,5.0f));
     scene.add("enemy01", vec3(-3.0f,10.0f,5.0f));
     scene.add("enemy02", vec3(15.0f,10.0f,0.0f));
     
@@ -245,6 +248,7 @@ int main(void)
     bo_player.init(render_bilb);
 
     // note: shader binding 10 for user interface
+    // note: shader binding 11 for user interface
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -289,6 +293,8 @@ int main(void)
 
         /* Poll for and process events */
         glfwPollEvents();
+
+        // cout << sizeof(vec3) << endl;
     }
 
     cout << endl;

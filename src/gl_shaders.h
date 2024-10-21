@@ -56,6 +56,8 @@ namespace DaSilva{
             uint bindless_index;    // keeping track of which bindless_texture_handles to push into
 
             vector<GLuint64> bindless_texture_handles;
+
+            uint textureArray;
         public:
 
             Texture();
@@ -63,6 +65,8 @@ namespace DaSilva{
 
             void loadTexture(const char * filepath, uint textureSlot);
             void loadTexture(const char * filepath);
+            void loadTextureArray(string* filepaths);
+            void bindTextureArray(uint slot);
 
             GLuint64* getBufferData();
             uint getBufferSize();

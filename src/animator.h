@@ -7,6 +7,7 @@
 
 using namespace std;
 
+// might require 4 bytes of padding
 struct Anim{
     int atlas_grid_size;
     int texture_index;

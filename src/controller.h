@@ -20,6 +20,7 @@ private:
     int windowWidth, windowHeight;
     double mouseX, mouseY;
 
+
 public:
     Controller(GLFWwindow *window, Camera *camera);
     ~Controller();
@@ -27,7 +28,7 @@ public:
     controllerI interface; // access to interface from other classes
 
     void mouse_controls(GLFWwindow *pWindow, float deltaTime, bool active);
-    vec3 mouseScreenToWorld(vec2 inMouse);
+    // vec3 mouseScreenToWorld(vec2 inMouse);
 };
 
 #endif
