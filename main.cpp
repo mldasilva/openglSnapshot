@@ -139,7 +139,7 @@ int main(void)
 
     WfcTiled world(15,9);
     world.generate();
-    render_main.insert(cone.vertices, cone.indices, vec3(0, -1, 0));
+    render_main.insert(cone.getVertices(), cone.getIndices(), vec3(0, -1, 0));
     for(const auto tile : world.tiles)
     {
         if(tile.tileType == land || tile.tileType == water)
@@ -250,6 +250,7 @@ int main(void)
     // note: shader binding 10 for user interface
     // note: shader binding 11 for user interface
 
+
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
     {
@@ -257,8 +258,9 @@ int main(void)
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTick;
         // deltaTime = fmax(currentTime - lastTick, 0.001f);
-
+        
         controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
+        userInterface.      update(); // update before player controller to stop player movement
         playerController.   update(deltaTime);     // Update player first
         scene.              update(0, v(playerController.position)); // Update billboard
         camera.             moveTo(v(playerController.position));   // Move camera to player's new position
@@ -271,8 +273,6 @@ int main(void)
         shader_jolt.update_ssbo(0); // matrices
         shader_bilb.update_ssbo(0); // vec3 positions
         shader_bilb.update_ssbo(1); // animations indices
-
-        
 
         /* Render here */
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);

@@ -250,3 +250,13 @@ void Model::cout_indices()
         cout << indices[i] << endl;
     }
 }
+
+vector<vertex> Model::getVertices()
+{
+    return vertices;
+}
+
+vector<uint> Model::getIndices()
+{
+    return indices;
+}

@@ -8,7 +8,7 @@ struct controllerI{
     // vec3 mouseWorldDirection; // world position
     // bool isMouseWorldDirty;
 
-    vec2 mouseScreenPosition; // screen position NDC, // only updates with mouse direction
+    vec2 mouseScreenPosition; // screen position NDC, // only updates with mouse left click
     bool isMouseScreenDirty;
 
     bool isJumping;
@@ -18,4 +18,7 @@ struct controllerI{
 
     int windowWidth;
     int windowHeight;
+
+    bool isMouseInUI; // changed in user_interface.cpp
+    vec2 rawMouseScreenPos; // always updated
 };

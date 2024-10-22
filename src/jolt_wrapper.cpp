@@ -467,7 +467,7 @@ void PlayerController::update(float deltaTime)
 {
 	ePrevPlayerState = ePlayerState;
 
-	setPlayerState();
+	setPlayerState(); // runs many times
 
 	// cout << endl;
 	// cout << "prevVelocity:" << prevVelocity << endl;
@@ -482,6 +482,7 @@ void PlayerController::update(float deltaTime)
 	// controls: should only fire once when needed
 	//================================
 
+	
 	if (pControllerI->isJumping && ePlayerState != playerState::jumping && isGrounded) {
 		velocity.SetY(jumpForce);  // Apply jump force
 	}
@@ -498,11 +499,14 @@ void PlayerController::update(float deltaTime)
 		// cout << direction << endl;
 	}
 
-	if(!pControllerI->mouseLeftDown && ePlayerState == playerState::running)
+	// note!: is mouse in UI flag here stopping player movement
+	if((!pControllerI->mouseLeftDown && ePlayerState == playerState::running) || pControllerI->isMouseInUI)
 	{
 		velocity.SetX(0);
 		velocity.SetZ(0);
 	}
+	
+
 
 	// animation :
 	//================================

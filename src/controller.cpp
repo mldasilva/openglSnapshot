@@ -80,13 +80,12 @@ void Controller::window_position_callback(GLFWwindow* window, int xpos, int ypos
 
 
 void Controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active)
-{
+{   
+    glfwGetCursorPos(window, &mouseX, &mouseY);
+    interface.rawMouseScreenPos = vec2(mouseX, mouseY);
+    
     if (interface.mouseLeftDown && active) 
     {
-        glfwGetCursorPos(window, &mouseX, &mouseY);
-
-        // cout << mouseX << " " << mouseY << endl;
-
         // if mouse cursor hasnt moved
         if(mouseX == interface.mouseScreenPosition.x && mouseY == interface.mouseScreenPosition.y)
         {

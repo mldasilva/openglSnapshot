@@ -35,17 +35,21 @@ private:
     void loadMesh(uint indexMesh);
 
     // ModelInterface data;
-public:
+
     json _json;
     vector<vertex> vertices;
 	vector<uint> indices;
 
-    
+public:
+
     Model(const char* file);
     ~Model();   
 
     modelI getInterface();
     void cout_vertices();
     void cout_indices(); 
+
+    vector<vertex> getVertices();
+    vector<uint> getIndices();
 };
 #endif
