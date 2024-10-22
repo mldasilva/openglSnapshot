@@ -125,17 +125,18 @@ void UserInterface::update()
             if((btn.state != buttonState::clicked) && controller_interface->mouseLeftDown)
             {
                 btn.state = buttonState::clicked;
-                cout << "clicked" << endl;
-                btn.funcPtr();
-
                 textureParams[btn.index] = texturePacker(btn.clickd);
+                btn.funcPtr();
+                // cout << "clicked" << endl;
+
+                uiBufferObject.memcpy_instanceCount(1, 0);
             }
             // hovered
             if((btn.state != buttonState::hovered) && (!controller_interface->mouseLeftDown))
             {
                 btn.state = buttonState::hovered;
-                cout << "hovered" << endl;
                 textureParams[btn.index] = texturePacker(btn.hoverd);
+                // cout << "hovered" << endl;
             }
         }
         else
@@ -145,8 +146,9 @@ void UserInterface::update()
             {
                 controller_interface->isMouseInUI = false;
                 btn.state = buttonState::normal;
-                cout << "normal" << endl;
                 textureParams[btn.index] = texturePacker(btn.normal);
+                // cout << "normal" << endl;
+                
             }
         }
     }

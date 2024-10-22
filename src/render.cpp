@@ -10,6 +10,8 @@ DaSilva::BufferObject::BufferObject()
 {
     cout << "creating buffer object..." << endl;
 }
+/// @brief Has mapped indirect buffer instanceCount
+/// @param renderPool 
 void DaSilva::BufferObject::init(RenderPool &renderPool)
 {
     // BufferObject(renderPool.vertices, 8, renderPool.indices, renderPool.commands);
@@ -42,7 +44,50 @@ void DaSilva::BufferObject::init(RenderPool &renderPool)
     {
         glGenBuffers(1, &indirectBuffer); 
         glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer); 
-        glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawElementsIndirectCommand) * renderPool.commands.size(), renderPool.commands.data(), GL_STATIC_DRAW);
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawElementsIndirectCommand) * renderPool.commands.size(), renderPool.commands.data(), GL_STATIC_DRAW); // GL_STATIC_DRAW
+        // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
+        commandCount = renderPool.commands.size();
+    }
+    else{
+        // printf("bufferObject command error\n");
+        cout << "bufferObject command error\n" << endl;
+        return;
+    }
+}
+
+void DaSilva::BufferObject::init(RenderPool &renderPool, uint indirectDrawType)
+{
+    // BufferObject(renderPool.vertices, 8, renderPool.indices, renderPool.commands);
+    
+    glGenVertexArrays(1, &VAO); 
+    glBindVertexArray(VAO); 
+    
+    glGenBuffers(1, &VBO); 
+    glBindBuffer(GL_ARRAY_BUFFER, VBO); 
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * renderPool.vertices.size(), renderPool.vertices.data(), GL_STATIC_DRAW); 
+    
+
+    // assuming 8 vertex offset
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
+    
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, normal));
+    
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texUV));
+
+
+    glGenBuffers(1, &EBO); 
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO); 
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint) * renderPool.indices.size(), renderPool.indices.data(), GL_STATIC_DRAW); 
+    
+
+    if(renderPool.commands.data() != NULL)
+    {
+        glGenBuffers(1, &indirectBuffer); 
+        glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer); 
+        glBufferData(GL_DRAW_INDIRECT_BUFFER, sizeof(DrawElementsIndirectCommand) * renderPool.commands.size(), renderPool.commands.data(), indirectDrawType); // GL_STATIC_DRAW
         // glBindBuffer(GL_DRAW_INDIRECT_BUFFER, 0);
         commandCount = renderPool.commands.size();
     }
@@ -106,6 +151,72 @@ void DaSilva::BufferObject::init(vector<vertex>& vertices, uint vertexOffset, ve
 
 }
 
+// not 100% related to this class but useful to keep together
+// this way has some disadvantaged vs glmaprange
+
+// glBufferSubData
+
+//     Usage: Uploads a specified range of data to a buffer that is already bound.
+//     How It Works: Directly writes data to a buffer on the GPU from the CPU without needing to map the buffer into CPU memory.
+
+// Pros:
+
+//     Simple to use for small, infrequent updates.
+//     No need to map/unmap the buffer, reducing potential errors.
+//     The OpenGL driver handles synchronization and ensures that the buffer is not in use before modifying the data.
+
+// Cons:
+
+//     Can be inefficient for frequent updates, especially if you’re modifying small parts of a large buffer. Each call might introduce overhead.
+//     Generally slower than mapped buffer access when making multiple updates, as each call to glBufferSubData may involve additional validation or GPU synchronization.
+
+void DaSilva::BufferObject::subData_instanceCount(uint index, uint newValue)
+{
+    GLintptr instanceCountOffset = offsetof(DrawElementsIndirectCommand, instanceCount) + (sizeof(DrawElementsIndirectCommand) * index);
+    glBufferSubData(GL_DRAW_INDIRECT_BUFFER, instanceCountOffset, sizeof(GLuint), &newValue);
+}
+
+
+// glMapBufferRange with memcpy
+
+//     Usage: You map the buffer (using glMapBufferRange or glMapBuffer), then use memcpy to write data into the mapped memory.
+//     How It Works: Similar to glMapBufferRange, you first map the buffer and then perform memory operations (like memcpy) directly to modify specific sections.
+
+// Pros:
+
+//     Same benefits as glMapBufferRange: low-latency access, efficient for multiple updates, and direct memory manipulation.
+//     memcpy provides a familiar interface for copying larger blocks of memory efficiently.
+
+// Cons:
+
+//     The same complexity and potential synchronization issues as glMapBufferRange.
+//     Careful buffer management is required to ensure the GPU doesn’t use the buffer while it is mapped.
+//     Slightly more manual memory management compared to using glBufferSubData.
+
+// When to Use:
+
+//     When you want to batch-copy data to a buffer or update multiple fields in a structure in one call.
+//     If you are comfortable managing mapped buffers and need the performance boost from direct memory access.
+
+
+// can be used on static_draw?
+void DaSilva::BufferObject::memcpy_instanceCount(uint index, uint newValue)
+{
+    GLintptr instanceCountOffset = offsetof(DrawElementsIndirectCommand, instanceCount) + (sizeof(DrawElementsIndirectCommand) * index);
+    
+    // // Map the buffer for writing (optional: GL_MAP_INVALIDATE_BUFFER_BIT can be used if replacing entire content)
+    void* bufferPtr = glMapBufferRange(GL_DRAW_INDIRECT_BUFFER, instanceCountOffset, sizeof(GLuint), 
+                                GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT);
+    if (bufferPtr) {
+        // Modify instance count
+        memcpy(bufferPtr, &newValue, sizeof(GLuint));
+
+        // Unmap the buffer after modification
+        glUnmapBuffer(GL_DRAW_INDIRECT_BUFFER);
+    }
+    
+}
+
 DaSilva::BufferObject::~BufferObject()
 {
     cout << "deleting buffer object" << endl;
@@ -117,6 +228,9 @@ DaSilva::BufferObject::~BufferObject()
     glDeleteBuffers(1, &EBO);
     glDeleteBuffers(1, &VBO);
     glDeleteVertexArrays(1, &VAO);
+
+    // if(indirect_map != nullptr)
+    // glUnmapBuffer(GL_DRAW_INDIRECT_BUFFER);
 }
 
 // =======================================================================================

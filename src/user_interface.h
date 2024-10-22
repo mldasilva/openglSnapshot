@@ -91,11 +91,8 @@ class UserInterface
 };
 
 class MainUI : public UserInterface
-{
-    private:
-        
-    public:
-        MainUI(const char* vertexPath, const char* fragmentPath, bool bindlessSupportFlag, controllerI* controllerInterface);
+{   
+    public: MainUI(const char* vertexPath, const char* fragmentPath, bool bindlessSupportFlag, controllerI* controllerInterface);
 };
 
 void button1();

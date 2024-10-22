@@ -82,8 +82,11 @@ namespace DaSilva{
 
             // needs init allowing for construct in other constructors without an initializer list
             void init(RenderPool& renderPool); // short hand version
+            void init(RenderPool &renderPool, uint indirectDrawType); // custom indirectDrawType GL_STATIC_DRAW GL_DYNAMIC_DRAW
             void init(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& commands);
             
+            void subData_instanceCount(uint index, uint newValue);
+            void memcpy_instanceCount(uint index, uint newValue);
     };
 
 }

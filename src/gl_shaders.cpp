@@ -197,20 +197,15 @@ void DaSilva::Shader::create_ssbo(uint binding, uint size, const void* data)
     }
     ssbo_size.push_back(size); // used for updating
     ssbo_data.push_back(data); // used for updating
-    // cout << "creating ssbo..." << endl;
-    // ssbo.push_back(0);
-    // ssbo_map.push_back(0);
+/*
+    GL_MAP_PERSISTENT_BIT: This flag allows you to keep the buffer persistently mapped, 
+    meaning that the pointer returned by glMapBufferRange remains valid until you explicitly unmap it. 
+    You do not need to call glUnmapBuffer after mapping it with this flag unless you no longer need the mapping 
+    and want to unmap it permanently.
 
-    // glGenBuffers(1, &ssbo[ssboIndex]); // by address
-    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo[ssboIndex]);
-    // glBufferStorage(GL_SHADER_STORAGE_BUFFER, size, data, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-    // glBindBufferBase(GL_SHADER_STORAGE_BUFFER, binding, ssbo[ssboIndex]); // by value
-    // // ssbo_map[ssboIndex] = 
-    // ssbo_map.push_back(glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT));
-    // glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
-
-    // ssboIndex++;
-
+    GL_MAP_COHERENT_BIT: Ensures that any writes from the CPU side to the mapped buffer are automatically 
+    visible to the GPU without needing explicit synchronization commands (like memory barriers).
+*/
     GLuint buffer;                 // New SSBO handle
     glGenBuffers(1, &buffer);      // Generate the SSBO
     ssbo.push_back(buffer);        // Add the handle to the vector
@@ -223,8 +218,9 @@ void DaSilva::Shader::create_ssbo(uint binding, uint size, const void* data)
     void* mappedBuffer = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, size, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
     ssbo_map.push_back(mappedBuffer); // Store the mapped pointer
 
+    // glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); // Unbind the buffer
-
+    
     ssboIndex++;
 }
 
