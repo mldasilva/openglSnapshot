@@ -112,14 +112,25 @@ DaSilva::Shader::~Shader()
 {
     cout << "deleting shader object" << endl;
 
-        // vector<uint> ssbo;
+    // vector<uint> ssbo;
     // vector<void*> ssbo_map;
-    for(uint s : ssbo)
-    {
+    for(uint &s : ssbo)
+    {   
+        // bind the buffer for unmapping
+        glBindBuffer(GL_SHADER_STORAGE_BUFFER, s); 
+        glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+
         cout << "deleting ssbo "<< s << endl;
         glDeleteBuffers(1, &s);
     }
 
+    // set pointers to nullptr to avoid dangling pointers
+    for(auto &ptr : ssbo_map)
+    {
+        ptr = nullptr;
+    }
+    
+    
     // ssbo_map not required? doesnt use a glGenFunction
 }
 
