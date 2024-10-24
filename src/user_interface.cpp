@@ -3,7 +3,7 @@
 void UserInterface::init()
 {
     // make buffer object from render pool
-    uiBufferObject.init(uiRenderPool);
+    uiBufferObject.init(uiRenderPool, GL_DYNAMIC_DRAW);
 
     if(!bBindlessSupport)
     {
@@ -117,7 +117,7 @@ void UserInterface::update()
         //===================================
         // if we are in a button hit box
         if(pos.x > btn.postion.x && pos.x < (btn.size.x + btn.postion.x) 
-        && pos.y > btn.postion.y && pos.y < (btn.size.y + btn.postion.y) )
+        && pos.y > btn.postion.y && pos.y < (btn.size.y + btn.postion.y) && btn.state != buttonState::hidden)
         {
             controller_interface->isMouseInUI = true;
 
@@ -127,9 +127,8 @@ void UserInterface::update()
                 btn.state = buttonState::clicked;
                 textureParams[btn.index] = texturePacker(btn.clickd);
                 btn.funcPtr();
-                // cout << "clicked" << endl;
-
-                uiBufferObject.memcpy_instanceCount(1, 0);
+                cout << "clicked" << btn.index << endl;
+                uiBufferObject.memcpy_instanceCount(1, 0);                
             }
             // hovered
             if((btn.state != buttonState::hovered) && (!controller_interface->mouseLeftDown))
@@ -197,6 +196,9 @@ MainUI::MainUI(const char* vertexPath, const char* fragmentPath, bool bindlessSu
     // build the ui / front to back   
     insert(vec2(50, 10), vec2(200, 80), anchor::topleft, btn1_prefab);
     insert(vec2(280, 10), vec2(200, 80), anchor::topleft, btn1_prefab, btn1_hoverd, btn1_clickd, button1);
+
+    insert(vec2(280, 120), vec2(200, 80), anchor::topleft, btn1_prefab, btn1_hoverd, btn1_clickd, button1);
+
 
     init(); // call last after all ui inserts
 }

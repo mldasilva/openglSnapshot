@@ -10,8 +10,7 @@ DaSilva::BufferObject::BufferObject()
 {
     cout << "creating buffer object..." << endl;
 }
-/// @brief Has mapped indirect buffer instanceCount
-/// @param renderPool 
+
 void DaSilva::BufferObject::init(RenderPool &renderPool)
 {
     // BufferObject(renderPool.vertices, 8, renderPool.indices, renderPool.commands);
@@ -55,6 +54,7 @@ void DaSilva::BufferObject::init(RenderPool &renderPool)
     }
 }
 
+// dynamic indirect buffer required for indirect moding
 void DaSilva::BufferObject::init(RenderPool &renderPool, uint indirectDrawType)
 {
     // BufferObject(renderPool.vertices, 8, renderPool.indices, renderPool.commands);
@@ -167,7 +167,7 @@ void DaSilva::BufferObject::init(vector<vertex>& vertices, uint vertexOffset, ve
 
 // Cons:
 
-//     Can be inefficient for frequent updates, especially if you’re modifying small parts of a large buffer. Each call might introduce overhead.
+//     Can be inefficient for frequent updates, especially if youre modifying small parts of a large buffer. Each call might introduce overhead.
 //     Generally slower than mapped buffer access when making multiple updates, as each call to glBufferSubData may involve additional validation or GPU synchronization.
 
 void DaSilva::BufferObject::subData_instanceCount(uint index, uint newValue)
@@ -190,7 +190,7 @@ void DaSilva::BufferObject::subData_instanceCount(uint index, uint newValue)
 // Cons:
 
 //     The same complexity and potential synchronization issues as glMapBufferRange.
-//     Careful buffer management is required to ensure the GPU doesn’t use the buffer while it is mapped.
+//     Careful buffer management is required to ensure the GPU doesnt use the buffer while it is mapped.
 //     Slightly more manual memory management compared to using glBufferSubData.
 
 // When to Use:
@@ -199,7 +199,6 @@ void DaSilva::BufferObject::subData_instanceCount(uint index, uint newValue)
 //     If you are comfortable managing mapped buffers and need the performance boost from direct memory access.
 
 
-// can be used on static_draw?
 void DaSilva::BufferObject::memcpy_instanceCount(uint index, uint newValue)
 {
     GLintptr instanceCountOffset = offsetof(DrawElementsIndirectCommand, instanceCount) + (sizeof(DrawElementsIndirectCommand) * index);

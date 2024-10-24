@@ -33,12 +33,12 @@ namespace DaSilva{
     };
 
     enum buttonState{
-        normal, hovered, clicked
+        normal, hovered, clicked, hidden
     };
-
+    
     struct button
     {
-        int index; // index that it is in the vector<textureParamUI>;
+        int index; // index related to what object it is in vector<textureParamUI>;
         void (*funcPtr)(); // function pointer
         vec2 postion;
         vec2 size;

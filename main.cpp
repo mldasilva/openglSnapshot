@@ -22,6 +22,7 @@
 // ui
 //  - button
 //  - hp bar
+//  - drag and drop
 
 // skills, abilities
 // quest
@@ -87,13 +88,7 @@ int main(void)
     init_glfw_debugger(window);
 
     // Check if bindless textures are supported
-    if (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64")) {
-        std::cout << "Bindless textures are supported on this system!" << std::endl;
-        bindless_supported = true;
-    } else {
-        std::cout << "Bindless textures are NOT supported on this system." << std::endl;
-        bindless_supported = false;
-    }
+    bindless_supported = (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64"));
 
     // ===============================================================
     // main
@@ -283,10 +278,6 @@ int main(void)
         shader_bilb.draw(camera, bo_player);    // billboards
 
         userInterface.draw();                   // user interface
-
-        // imgui.start_frame();
-        // imgui.demo(&imGuiHovered);
-        // imgui.rendering();
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);
