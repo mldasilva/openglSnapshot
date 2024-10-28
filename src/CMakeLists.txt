@@ -51,6 +51,17 @@ target_include_directories(gl_shaders PUBLIC
 )
 
 # ==================================================
+# shader v2
+# ==================================================
+
+add_library(shader STATIC shader.cpp)
+
+target_include_directories(shader PUBLIC 
+    ${CMAKE_SOURCE_DIR}/lib
+    ${CMAKE_SOURCE_DIR}/lib/glm
+)
+
+# ==================================================
 # imGui_wrapper
 # ==================================================
 

@@ -10,12 +10,12 @@ Animator::Animator(uint count)
     loadAnimation("hello", 0, 9, 81, 0.5f, true);
     loadAnimation("hello1", 0, 9, 81, 3.0f, true);
 
-    cout << "creating animator" << endl;
+    // cout << "creating animator" << endl;
 }
 
 Animator::~Animator()
 {
-    cout << "deleting animator" << endl;
+    // cout << "deleting animator" << endl;
 }
 
 void Animator::setAnimation(string name, uint index)

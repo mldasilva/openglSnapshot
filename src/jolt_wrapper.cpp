@@ -22,7 +22,7 @@ JoltWrapper::JoltWrapper()
 
 JoltWrapper::~JoltWrapper()
 {
-	cout << "Deleteing jolt Wrapper.." << endl;
+	// cout << "Deleteing jolt Wrapper.." << endl;
 	for (BodyID bodyID : bodyIDs)
     {
 		// Remove the shape from the physics system. Note that the sphere itself keeps all of its state and can be re-added at any time.
@@ -102,7 +102,7 @@ void JoltWrapper::update(float deltaTime)
 
 BodyID JoltWrapper::create_object(RenderPool& render, objectType inType, modelI inModel, RVec3Arg inPosition, QuatArg inRot)
 {
-	cout << " created object" << endl;
+	// cout << " created object" << endl;
 	BodyID result;
 
 	render.insert(inModel.vertices, inModel.indices, 1);

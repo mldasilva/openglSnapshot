@@ -22,13 +22,11 @@ class Scene{
         }
 
         int find(string name)
-        {
-            const auto& um = map.find(name);
-            
-            if (um != map.end()) 
+        {           
+            if (map.find(name) != map.end()) 
             {
                 // Key found
-                return um->second;
+                return map[name];
             } 
             else 
             {
@@ -41,7 +39,7 @@ class Scene{
 
         vec3 fetch(string name)
         {
-            const auto& um = map.find(name);
+            const auto um = map.find(name);
             if (um != map.end()) 
             {
                 // Key found

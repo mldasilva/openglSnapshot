@@ -243,7 +243,7 @@ void Controller::mouse_controls(GLFWwindow *window, float deltaTime, bool active
 
 Controller::Controller(GLFWwindow *window, Camera *camera)
 {
-    cout << "creating controller object..." << endl;
+    // cout << "creating controller object..." << endl;
     // glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
     // _camera = camera;
     
@@ -282,5 +282,5 @@ Controller::Controller(GLFWwindow *window, Camera *camera)
 
 Controller::~Controller()
 {
-    cout << "deleting controller object..." << endl;
+    // cout << "deleting controller object..." << endl;
 }

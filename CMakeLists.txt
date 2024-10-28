@@ -248,6 +248,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
 	wfc
 	billboard
 	user_interface
+	shader
 )
 
 # Define the resource path at configure time

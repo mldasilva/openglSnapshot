@@ -11,6 +11,9 @@
 #include "wfc.h"
 #include "billboard.h"
 #include "user_interface.h"
+
+#include "shader.h" // v2
+
 // #include "imGui_wrapper.h"
 #include <vector>
 
@@ -95,7 +98,9 @@ int main(void)
     // ===============================================================
     // main
     // ===============================================================
-
+    
+    ShaderStorageBufferObject ssboManager;
+    
     Camera          camera(width, height);
     Controller      controller(window, &camera);    // after camera
 
@@ -221,6 +226,17 @@ int main(void)
 	jolt.optimize();
 
     shader_main.    create_ssbo(0, render_main.getBufferSize(), render_main.getBufferData());
+    
+
+    // testing
+    cout << "testing" << endl;
+    ssboManager.add("testing", render_main.getBufferSize(), render_main.getBufferData());
+
+    cout << ssboManager.find("testing") << endl;
+
+    return -2;
+
+
     if(bindless_supported)
     {
         shader_main.create_ssbo(2, textures.getBufferSize(), textures.getBufferData());
@@ -230,7 +246,7 @@ int main(void)
         shader_main.set_uniform_location("u_textureSampler");
         shader_jolt.set_uniform_location("u_textureSampler");
         shader_bilb.set_uniform_location("u_textureSampler");
-        cout << " set up texture sampler" << endl;
+        // cout << " set up texture sampler" << endl;
     }
     BufferObject    bo_main; 
     bo_main.init(render_main);

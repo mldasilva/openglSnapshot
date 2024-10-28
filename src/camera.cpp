@@ -2,7 +2,7 @@
 
 Camera::Camera(uint width, uint height)
 {
-    cout << "creating camera object" << endl;
+    // cout << "creating camera object" << endl;
     zoom = 50.0f;
 
     float halfWidth = (width / 2.0f) / zoom;
@@ -24,7 +24,7 @@ Camera::Camera(uint width, uint height)
 
 Camera::~Camera()
 {
-    cout << "deleting camera object" << endl;
+    // cout << "deleting camera object" << endl;
 }
 
 void Camera::rotate(float angleAddition)

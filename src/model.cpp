@@ -2,7 +2,7 @@
 
 Model::Model(const char* file)
 {
-	cout << "creating model object..." << endl;
+	// cout << "creating model object..." << endl;
     string text = get_file_contents(file);
     _json = json::parse(text);
 
@@ -15,7 +15,7 @@ Model::Model(const char* file)
 
 Model::~Model()
 {
-	cout << "deleting model object..." << endl;
+	// cout << "deleting model object..." << endl;
 }
 
 // Reads a text file and outputs a string with everything in the text file

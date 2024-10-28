@@ -8,7 +8,7 @@
 
 DaSilva::BufferObject::BufferObject()
 {
-    cout << "creating buffer object..." << endl;
+    // cout << "creating buffer object..." << endl;
 }
 
 void DaSilva::BufferObject::init(RenderPool &renderPool)
@@ -100,7 +100,7 @@ void DaSilva::BufferObject::init(RenderPool &renderPool, uint indirectDrawType)
 
 void DaSilva::BufferObject::init(vector<vertex>& vertices, uint vertexOffset, vector<uint>& indices, vector<DrawElementsIndirectCommand>& commands)
 {
-    cout << "creating buffer object..." << endl;
+    // cout << "creating buffer object..." << endl;
     glGenVertexArrays(1, &VAO); 
     glBindVertexArray(VAO); 
     
@@ -206,7 +206,8 @@ void DaSilva::BufferObject::memcpy_instanceCount(uint index, uint newValue)
     // // Map the buffer for writing (optional: GL_MAP_INVALIDATE_BUFFER_BIT can be used if replacing entire content)
     void* bufferPtr = glMapBufferRange(GL_DRAW_INDIRECT_BUFFER, instanceCountOffset, sizeof(GLuint), 
                                 GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_RANGE_BIT);
-    if (bufferPtr) {
+    if (bufferPtr) 
+    {
         // Modify instance count
         memcpy(bufferPtr, &newValue, sizeof(GLuint));
 
@@ -225,7 +226,7 @@ void DaSilva::BufferObject::draw()
 
 DaSilva::BufferObject::~BufferObject()
 {
-    cout << "deleting buffer object" << endl;
+    // cout << "deleting buffer object" << endl;
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -246,12 +247,12 @@ DaSilva::BufferObject::~BufferObject()
 // =======================================================================================
 DaSilva::RenderPool::RenderPool()
 {
-    cout << "creating renderPool object..." << endl;
+    // cout << "creating renderPool object..." << endl;
 }
 
 DaSilva::RenderPool::~RenderPool()
 {
-    cout << "deleting renderPool object..." << endl;
+    // cout << "deleting renderPool object..." << endl;
 }
 
 uint DaSilva::RenderPool::getCount()

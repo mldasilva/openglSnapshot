@@ -29,7 +29,7 @@ std::string LoadFileToString(const std::string& filePath) {
 
 DaSilva::Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {
-    cout << "creating shader object..." << endl;
+    // cout << "creating shader object..." << endl;
 
     ssboIndex = 0; // keeping track of ssbo vector pushs
 
@@ -110,7 +110,7 @@ DaSilva::Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 DaSilva::Shader::~Shader()
 {
-    cout << "deleting shader object" << endl;
+    // cout << "deleting shader object" << endl;
 
     // vector<uint> ssbo;
     // vector<void*> ssbo_map;
@@ -120,7 +120,7 @@ DaSilva::Shader::~Shader()
         glBindBuffer(GL_SHADER_STORAGE_BUFFER, s); 
         glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
 
-        cout << "deleting ssbo "<< s << endl;
+        // cout << "deleting ssbo "<< s << endl;
         glDeleteBuffers(1, &s);
     }
 
@@ -287,7 +287,7 @@ uint DaSilva::Shader::getID()
 
 DaSilva::Texture::Texture()
 {
-    cout << "creating texture object..." << endl;
+    // cout << "creating texture object..." << endl;
     textureAddrIndex = 0;
     bindless_index = 0;
 }
@@ -296,11 +296,11 @@ DaSilva::Texture::~Texture()
 {
     for(const uint& id : textureAddress) 
     {
-        cout << "deleting texture " << id << endl;
+        // cout << "deleting texture " << id << endl;
         glDeleteTextures(1, &id);
     }
 
-    cout << "deleting texture object..." << endl;
+    // cout << "deleting texture object..." << endl;
 }
 
 /// @brief loads texture into a opengl texture slot, default 0
@@ -310,7 +310,7 @@ DaSilva::Texture::~Texture()
 void DaSilva::Texture::loadTexture(const char * filepath, uint textureSlot)
 {
     textureAddress.push_back(0);
-    cout << "loaded texture into address: " << textureAddrIndex << endl;
+    // cout << "loaded texture into address: " << textureAddrIndex << endl;
     //load and create a texture 
     //-------------------------
     glGenTextures(1, &textureAddress[textureAddrIndex]);
