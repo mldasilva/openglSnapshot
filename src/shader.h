@@ -34,6 +34,7 @@ class ShaderStorageBufferObject
         
         void create_ssbo(uint binding, uint size, const void* data);
         void update_ssbo(uint index);
+
     public:
         ShaderStorageBufferObject();
         ~ShaderStorageBufferObject();
@@ -47,10 +48,14 @@ class Shader_2{
     private:
         uint id;
 
+        string vertexCode;
+        string fragmentCode;
+
         unordered_map<string, int> uniformLocationMap;
 
         void checkCompileErrors(unsigned int shader, std::string type);
 
+        void replaceBindings(int ssboCount);
     public:
         Shader_2(const char* vertexPath, const char* fragmentPath);
         ~Shader_2();
@@ -62,5 +67,6 @@ class Shader_2{
         int  get_uniform_location(const char *name);
         uint getID();
 
-
+        string debugVertShaderOut();
+        string debugFragShaderOut();
 };

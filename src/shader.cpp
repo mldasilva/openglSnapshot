@@ -142,12 +142,6 @@ Shader_2::Shader_2(const char* vertexPath, const char* fragmentPath)
     // cout << "creating shader object..." << endl;
 
     // 1. retrieve the vertex/fragment source code from filePath
-    string vertexCode;
-    string fragmentCode;
-
-    // ifstream vShaderFile;
-    // ifstream fShaderFile;
-
     vertexCode      = LoadFileToStringv2(vertexPath);
     fragmentCode    = LoadFileToStringv2(fragmentPath);
     // ensure ifstream objects can throw exceptions:
@@ -216,6 +210,11 @@ Shader_2::Shader_2(const char* vertexPath, const char* fragmentPath)
     glDeleteShader(fragment);
 }
 
+Shader_2::~Shader_2()
+{
+
+}
+
 void Shader_2::checkCompileErrors(unsigned int shader, std::string type)
 {
     int success;
@@ -240,26 +239,22 @@ void Shader_2::checkCompileErrors(unsigned int shader, std::string type)
     }
 }
 
+void Shader_2::replaceBindings(int ssboCount)
+{
+    std::string toReplace = "binding = 0";
+    std::string replacement = "binding = "+ std::to_string(ssboCount);
+
+    size_t pos = vertexCode.find(toReplace);
+    if (pos != std::string::npos) {
+        // Replace "binding = 0" with "binding = 1"
+        vertexCode.replace(pos, toReplace.length(), replacement);
+    }
+}
+
 void Shader_2::draw(Camera& camera, DaSilva::BufferObject& buffer)
 {
     // Use the shader program
     glUseProgram(id);
-
-    // move into get_uniform_location
-    // Get the location of the 'modelMatrix' uniform in the shader
-    // GLint viewmatrix = glGetUniformLocation(id, "u_view");
-    // GLint projectionmatrix = glGetUniformLocation(id, "u_projection");
-
-    // texture slot example
-    // glUniform1i(glGetUniformLocation(id, "u_textureSampler"), 3);
-    
-    // glm::mat4 trans = glm::mat4(1.0f);
-    // trans = glm::rotate(trans, glm::radians(0.0f), glm::vec3(0.0, 0.0, 1.0));
-    // trans = glm::scale(trans, glm::vec3(0.1f, 0.1777f, 1.0f)); 
-    // trans = glm::translate(trans, glm::vec3(0.0f, 3.0f, 0.0f));
-
-    // unsigned int transformLoc = glGetUniformLocation(id, "transform");
-    // glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
     // Pass the glm::mat4 to the shader
     glUniformMatrix4fv(get_uniform_location("u_view"), 1, GL_FALSE, glm::value_ptr(camera.view));
@@ -310,4 +305,15 @@ int Shader_2::get_uniform_location(const char *name)
 uint Shader_2::getID()
 {
     return id;
+}
+
+string Shader_2::debugVertShaderOut()
+{
+    // replaceBindings(169);
+    return vertexCode;
+}
+
+string Shader_2::debugFragShaderOut()
+{
+    return fragmentCode;
 }

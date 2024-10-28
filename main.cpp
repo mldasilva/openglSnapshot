@@ -116,17 +116,17 @@ int main(void)
     }
 
     DaSilva::Shader         shader_main(shader_default_vs, fs1.c_str());
-    DaSilva::RenderPool     render_main;
+    
 
     DaSilva::Shader         shader_jolt(shader_jolt_vs, fs2.c_str());
     DaSilva::RenderPool     render_jolt;
 
     DaSilva::Shader         shader_bilb(shader_bb_vs, fs3.c_str());
-    DaSilva::RenderPool     render_bilb;
 
     UIManager               userInterface(UINB_vs, UINB_fs, bindless_supported, &controller.interface);
 
     JoltWrapper     jolt; // Now we can create the actual physics system.
+
 
     // ===============================================================
     // model loading
@@ -134,14 +134,15 @@ int main(void)
 
     Model cube(model_cube);
     Model cone(model_cone);
-    
+    Billboard billboard(1);
+
     // ===============================================================
     // test world scene
     // ===============================================================
 
     WfcTiled world(15,9);
     world.generate();
-    render_main.insert(cone.getVertices(), cone.getIndices(), vec3(0, -1, 0));
+    
     for(const auto tile : world.tiles)
     {
         if(tile.tileType == land || tile.tileType == water)
@@ -209,8 +210,8 @@ int main(void)
     scene.add("enemy01", vec3(-3.0f,10.0f,5.0f));
     scene.add("enemy02", vec3(15.0f,10.0f,0.0f));
     
-    Billboard billboard(1);
-    render_bilb.insert(billboard.vertices, billboard.indices, 10);
+    
+    
 
     // create player controller
     PlayerController playerController(
@@ -225,16 +226,35 @@ int main(void)
     
 	jolt.optimize();
 
-    shader_main.    create_ssbo(0, render_main.getBufferSize(), render_main.getBufferData());
+    // shader_main.    create_ssbo(0, render_main.getBufferSize(), render_main.getBufferData());
     
 
-    // testing
-    cout << "testing" << endl;
-    ssboManager.add("testing", render_main.getBufferSize(), render_main.getBufferData());
 
-    cout << ssboManager.find("testing") << endl;
 
-    return -2;
+
+
+
+
+
+
+
+
+
+    
+
+    BufferObject bo_main; 
+    bo_main.renderPool.insert(cone.getVertices(), cone.getIndices(), vec3(0, 1, 0));
+    bo_main.init();
+
+    Shader_2    shader_version2(shader_default_vs, shader_nBindless_fs);
+    ssboManager.add("Render", bo_main.getBufferSize(), bo_main.getBufferData());
+    
+
+
+
+
+
+
 
 
     if(bindless_supported)
@@ -243,15 +263,15 @@ int main(void)
     }
     else
     {
-        shader_main.set_uniform_location("u_textureSampler");
+        shader_version2.set_uniform_location("u_textureSampler");
         shader_jolt.set_uniform_location("u_textureSampler");
         shader_bilb.set_uniform_location("u_textureSampler");
         // cout << " set up texture sampler" << endl;
     }
-    BufferObject    bo_main; 
-    bo_main.init(render_main);
+
     
     shader_jolt.    create_ssbo(1, jolt.getBufferSize(),        jolt.getBufferData());
+    
     BufferObject    bo_jolt; 
     bo_jolt.init(render_jolt);
 
@@ -259,7 +279,8 @@ int main(void)
     shader_bilb.    create_ssbo(7, animator.getBufferSize(),    animator.getBufferData());
     
     BufferObject    bo_player; 
-    bo_player.init(render_bilb);
+    bo_player.renderPool.insert(billboard.vertices, billboard.indices, 10);
+    bo_player.init();
 
     // note: shader binding 10 for user interface
     // note: shader binding 11 for user interface
@@ -292,7 +313,7 @@ int main(void)
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        shader_main.draw(camera, bo_main);      // render only insert into render
+        shader_version2.draw(camera, bo_main);      // render only insert into render
         shader_jolt.draw(camera, bo_jolt);      // physics objects
         shader_bilb.draw(camera, bo_player);    // billboards
 

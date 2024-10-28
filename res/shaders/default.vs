@@ -4,9 +4,6 @@
 layout(std430, binding = 0) readonly buffer InstanceMatricies {
     mat4 instancedMatrix[];
 };
-// layout(std430, binding = 1) buffer ObjectIDS {
-//     uint objectID[];
-// };
 
 // inputs
 layout(location = 0) in vec3 Position;

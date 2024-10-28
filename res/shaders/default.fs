@@ -3,10 +3,6 @@
 #extension GL_ARB_gpu_shader_int64 : enable
 
 //ssbo input
-// layout(std430, binding = 3) readonly buffer TextureIndices {
-//     uint textureIndices[];
-// };
-
 layout(std430, binding = 2) readonly buffer textureHandles {
     uint64_t handles[];
 };

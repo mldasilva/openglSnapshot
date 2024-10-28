@@ -224,6 +224,18 @@ void DaSilva::BufferObject::draw()
     glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, commandCount, sizeof(DrawElementsIndirectCommand));
 }
 
+// when using local renderpool
+const void *DaSilva::BufferObject::getBufferData()
+{
+    return renderPool.getBufferData();
+}
+
+// when using local renderpool
+uint DaSilva::BufferObject::getBufferSize()
+{
+    return renderPool.getBufferSize();
+}
+
 DaSilva::BufferObject::~BufferObject()
 {
     // cout << "deleting buffer object" << endl;
@@ -238,6 +250,11 @@ DaSilva::BufferObject::~BufferObject()
 
     // if(indirect_map != nullptr)
     // glUnmapBuffer(GL_DRAW_INDIRECT_BUFFER);
+}
+
+void DaSilva::BufferObject::init()
+{
+    init(renderPool, GL_DYNAMIC_DRAW);
 }
 
 // =======================================================================================

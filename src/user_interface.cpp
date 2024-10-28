@@ -223,8 +223,6 @@ void UserInterface::update(float deltaTime)
 {
     // this logic goes thru all the buttons only allowing 1 click on left down
     vec2 mouse = controller_interface->rawMouseScreenPos;
-    
-    controller_interface->isMouseInUI = true; // remove
 
     progressBarsUpdate(deltaTime);
     

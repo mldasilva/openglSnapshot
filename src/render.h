@@ -47,7 +47,8 @@ namespace DaSilva{
     };
     // sizeof(DrawElementsIndirectCommand) == 20
 
-    class RenderPool{
+    class RenderPool
+    {
         private:
             uint count = 0; // amount of objects in commands counting instances, increment needs to start at 0 else garbage
             vector<mat4> matrices;
@@ -69,8 +70,11 @@ namespace DaSilva{
             uint getBufferSize();
     };
 
-    class BufferObject{
+    class BufferObject
+    {
         public:
+            RenderPool renderPool; // when using local renderpool
+
             uint VAO;
             uint VBO;
             uint EBO;
@@ -79,7 +83,7 @@ namespace DaSilva{
 
             BufferObject();
             ~BufferObject();
-
+            void init(); // self renderPool usage
             // needs init allowing for construct in other constructors without an initializer list
             void init(RenderPool& renderPool); // short hand version
             void init(RenderPool &renderPool, uint indirectDrawType); // custom indirectDrawType GL_STATIC_DRAW GL_DYNAMIC_DRAW
@@ -89,6 +93,10 @@ namespace DaSilva{
             void memcpy_instanceCount(uint index, uint newValue);
 
             void draw();
+
+            // when using local renderpool
+            const void* getBufferData();
+            uint getBufferSize();
     };
 
 }
