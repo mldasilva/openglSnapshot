@@ -87,6 +87,8 @@ namespace DaSilva{
             
             void subData_instanceCount(uint index, uint newValue);
             void memcpy_instanceCount(uint index, uint newValue);
+
+            void draw();
     };
 
 }

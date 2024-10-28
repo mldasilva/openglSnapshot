@@ -216,6 +216,13 @@ void DaSilva::BufferObject::memcpy_instanceCount(uint index, uint newValue)
     
 }
 
+void DaSilva::BufferObject::draw()
+{
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_DRAW_INDIRECT_BUFFER, indirectBuffer);
+    glMultiDrawElementsIndirect(GL_TRIANGLES, GL_UNSIGNED_INT, 0, commandCount, sizeof(DrawElementsIndirectCommand));
+}
+
 DaSilva::BufferObject::~BufferObject()
 {
     cout << "deleting buffer object" << endl;

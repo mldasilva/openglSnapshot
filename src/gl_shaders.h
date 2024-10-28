@@ -42,10 +42,13 @@ namespace DaSilva{
             void create_ssbo(uint binding, uint size, const void * data);
             void update_ssbo(uint index);
             void draw(Camera& camera, BufferObject& buffer);
+            void use();
             void triangle_debug();
             void set_uniform_location(const char *name);
-            int get_uniform_location(const char *name);
+            int  get_uniform_location(const char *name);
             uint getID();
+
+
     };
 
     class Texture{

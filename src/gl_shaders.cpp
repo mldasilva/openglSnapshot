@@ -197,6 +197,11 @@ void DaSilva::Shader::draw(Camera& camera, BufferObject& buffer)
 
 }
 
+void DaSilva::Shader::use()
+{
+    glUseProgram(id);
+}
+
 //CREATE_SHADER_BUFFER_STORAGE
 void DaSilva::Shader::create_ssbo(uint binding, uint size, const void* data)
 {

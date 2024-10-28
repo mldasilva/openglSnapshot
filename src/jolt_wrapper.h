@@ -375,7 +375,6 @@ class JoltWrapper
 		BodyIDVector bodyIDs; 
 
 		
-
 		JoltWrapper();
 		~JoltWrapper();
 
@@ -394,13 +393,6 @@ class JoltWrapper
 		const void* getBufferData();
 		void optimize();
 };
-
-// enum animState
-// {
-// 	up, down, left, right, 
-// 	upLeft, upRight, downLeft, downRight, 
-// 	still
-// };
 
 enum animState{
 	a_error, a_still, 

@@ -23,6 +23,8 @@
 //  - button
 //  - hp bar
 //  - drag and drop
+//  - hide 
+//  - inventory
 
 // skills, abilities
 // quest
@@ -117,7 +119,7 @@ int main(void)
     DaSilva::Shader         shader_bilb(shader_bb_vs, fs3.c_str());
     DaSilva::RenderPool     render_bilb;
 
-    MainUI                  userInterface(UINB_vs, UINB_fs, bindless_supported, &controller.interface);
+    UIManager               userInterface(UINB_vs, UINB_fs, bindless_supported, &controller.interface);
 
     JoltWrapper     jolt; // Now we can create the actual physics system.
 
@@ -239,6 +241,7 @@ int main(void)
 
     shader_bilb.    create_ssbo(4, scene.getBufferSize(),       scene.getBufferData());
     shader_bilb.    create_ssbo(7, animator.getBufferSize(),    animator.getBufferData());
+    
     BufferObject    bo_player; 
     bo_player.init(render_bilb);
 
@@ -255,8 +258,8 @@ int main(void)
         // deltaTime = fmax(currentTime - lastTick, 0.001f);
         
         controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
-        userInterface.      update(); // update before player controller to stop player movement
-        playerController.   update(deltaTime);     // Update player first
+        userInterface.      update(deltaTime);      // update before player controller to stop player movement
+        playerController.   update(deltaTime);      // Update player first
         scene.              update(0, v(playerController.position)); // Update billboard
         camera.             moveTo(v(playerController.position));   // Move camera to player's new position
 
