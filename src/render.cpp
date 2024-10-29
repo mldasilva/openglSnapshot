@@ -225,13 +225,13 @@ void DaSilva::BufferObject::draw()
 }
 
 // when using local renderpool
-const void *DaSilva::BufferObject::getBufferData()
+const void *DaSilva::BufferObject::getRenderPoolBufferData()
 {
     return renderPool.getBufferData();
 }
 
 // when using local renderpool
-uint DaSilva::BufferObject::getBufferSize()
+uint DaSilva::BufferObject::getRenderPoolBufferSize()
 {
     return renderPool.getBufferSize();
 }
@@ -255,6 +255,7 @@ DaSilva::BufferObject::~BufferObject()
 void DaSilva::BufferObject::init()
 {
     init(renderPool, GL_DYNAMIC_DRAW);
+    // renderPool.~RenderPool();
 }
 
 // =======================================================================================

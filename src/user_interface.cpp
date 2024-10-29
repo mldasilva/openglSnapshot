@@ -8,7 +8,7 @@ void UserInterface::init()
     if(!bBindlessSupport)
     {
         // for texture array support
-        string paths[3] = { texture_anim_00, texture_greentop, texture_redtop }; // for texture array support
+        vector<string> paths = { texture_anim_00, texture_greentop, texture_redtop }; // for texture array support
         textures.loadTextureArray(paths);
 
         // shader settings and ssbos

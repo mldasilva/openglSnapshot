@@ -68,7 +68,7 @@ namespace DaSilva{
 
             void loadTexture(const char * filepath, uint textureSlot);
             void loadTexture(const char * filepath);
-            void loadTextureArray(string* filepaths);
+            void loadTextureArray(vector<string> filepaths);
             void bindTextureArray(uint slot);
 
             GLuint64* getBufferData();

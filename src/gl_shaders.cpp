@@ -396,7 +396,7 @@ void DaSilva::Texture::loadTexture(const char * filepath)
 /// 
 /// disadvantage vs bindless textures is Texture-Array require all textures to be the same size else result in seg fault
 /// @param filepaths 
-void DaSilva::Texture::loadTextureArray(string* filepaths)
+void DaSilva::Texture::loadTextureArray(vector<string> filepaths)
 {
     // GLuint textureArray;
     glGenTextures(1, &textureArray);
@@ -405,7 +405,7 @@ void DaSilva::Texture::loadTextureArray(string* filepaths)
     // Define the array size: width, height, and number of layers (textures)
     int width = 1024; // Width of each texture
     int height = 1024; // Height of each texture
-    int layers = filepaths->size();  // Number of textures
+    int layers = filepaths.size();  // Number of textures
     
     glTexStorage3D(GL_TEXTURE_2D_ARRAY, 1, GL_RGBA8, width, height, layers);  // Allocate storage
 

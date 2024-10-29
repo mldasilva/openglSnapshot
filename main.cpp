@@ -44,6 +44,7 @@
 // spell system: spell cards some crafted most found like loot
 // talent tree is just like pokemon energy cards dictating what card/spells can be used/ equiped
 // cards/spells have random attributes like equipment
+// romulus and remus
 
 // know issue:
 // 1) dragging window freezes game and messes up deltatime
@@ -99,32 +100,12 @@ int main(void)
     // main
     // ===============================================================
     
-    ShaderStorageBufferObject ssboManager;
+    ShaderStorageBufferObject ssbo;
     
     Camera          camera(width, height);
     Controller      controller(window, &camera);    // after camera
 
-    string fs1 = string(shader_default_fs);
-    string fs2 = string(shader_jolt_fs);
-    string fs3 = string(shader_bb_fs);
-
-    if(!bindless_supported)
-    {
-        fs1 = string(shader_nBindless_fs);
-        fs2 = string(shader_nBindless_fs);
-        fs3 = string(shader_nBindless_fs);
-    }
-
-    DaSilva::Shader         shader_main(shader_default_vs, fs1.c_str());
-    
-
-    DaSilva::Shader         shader_jolt(shader_jolt_vs, fs2.c_str());
-    DaSilva::RenderPool     render_jolt;
-
-    DaSilva::Shader         shader_bilb(shader_bb_vs, fs3.c_str());
-
     UIManager               userInterface(UINB_vs, UINB_fs, bindless_supported, &controller.interface);
-
     JoltWrapper     jolt; // Now we can create the actual physics system.
 
 
@@ -139,6 +120,11 @@ int main(void)
     // ===============================================================
     // test world scene
     // ===============================================================
+    #pragma region jolt world
+
+    Shader_2 joltShader(shader_jolt_vs, shader_nBindless_fs);
+
+    RenderPool render_jolt;
 
     WfcTiled world(15,9);
     world.generate();
@@ -169,23 +155,21 @@ int main(void)
     // add floor to joly body filter
     MyBodyFilter floorFilter(floor);
     jolt.pBodyFilter = &floorFilter;
-    
+
+    BufferObject    bo_jolt; 
+    bo_jolt.init(render_jolt);
+
+    #pragma endregion
+
     // ===============================================================
     // textures
     // ===============================================================
     
-    DaSilva::Texture textures;
-    if(bindless_supported)
-    {
-        textures.loadTexture(texture_anim_00);  // texture index 0
-        textures.loadTexture(texture_dice);     // texture index 1
-    }
-    else
-    {
-        textures.loadTexture(texture_anim_00, 0);  // texture index 0
-        textures.loadTexture(texture_dice, 1);     // texture index 1
-    }
-
+    Texture textures;
+    textures.loadTextureArray(vector<string>{texture_anim_00, texture_greentop, texture_redtop});
+    textures.bindTextureArray(1); // 1 is the slot
+    // glUniform1i(mainShader.get_uniform_location("u_textureArray"), 0);
+    
     // ===============================================================
     // blending settings
     // ===============================================================
@@ -210,9 +194,6 @@ int main(void)
     scene.add("enemy01", vec3(-3.0f,10.0f,5.0f));
     scene.add("enemy02", vec3(15.0f,10.0f,0.0f));
     
-    
-    
-
     // create player controller
     PlayerController playerController(
         &jolt, &animator, 
@@ -226,64 +207,50 @@ int main(void)
     
 	jolt.optimize();
 
-    // shader_main.    create_ssbo(0, render_main.getBufferSize(), render_main.getBufferData());
-    
+    // ===============================================================
+    // main scene
+    // ===============================================================
 
+    // For Textures ssbo
+    vector<int> textureIds;
+    textureIds.push_back(2);
+    textureIds.push_back(0);
 
-
-
-
-
-
-
-
-
-
-
-    
-
+    // making bufferObject with all the vertices and indices
     BufferObject bo_main; 
     bo_main.renderPool.insert(cone.getVertices(), cone.getIndices(), vec3(0, 1, 0));
+    bo_main.renderPool.insert(cone.getVertices(), cone.getIndices(), vec3(3, 1, 0));
     bo_main.init();
 
-    Shader_2    shader_version2(shader_default_vs, shader_nBindless_fs);
-    ssboManager.add("Render", bo_main.getBufferSize(), bo_main.getBufferData());
+    // making ssbo
+    ssbo.add("Render", bo_main.getRenderPoolBufferSize(), bo_main.getRenderPoolBufferData());
+    ssbo.add("Textures", textureIds.size() * sizeof(int), textureIds.data());
+
+    // make shader and attach ssbo
+    Shader_2 mainShader(v2_default_vs, v2_default_fs);
+    mainShader.attachSSBO(ssbo.find("Render"), shaderTypeEnum::vertShader);
+    mainShader.attachSSBO(ssbo.find("Textures"), shaderTypeEnum::fragShader);
+
+    mainShader.attachCode(shaderTypeEnum::vertShader);
+    mainShader.attachCode(shaderTypeEnum::fragShader);
+    mainShader.linkProgram();
     
-
-
-
-
-
-
-
-
-    if(bindless_supported)
-    {
-        shader_main.create_ssbo(2, textures.getBufferSize(), textures.getBufferData());
-    }
-    else
-    {
-        shader_version2.set_uniform_location("u_textureSampler");
-        shader_jolt.set_uniform_location("u_textureSampler");
-        shader_bilb.set_uniform_location("u_textureSampler");
-        // cout << " set up texture sampler" << endl;
-    }
-
+    // ===============================================================
+    // billboards including player
+    // ===============================================================
     
-    shader_jolt.    create_ssbo(1, jolt.getBufferSize(),        jolt.getBufferData());
-    
-    BufferObject    bo_jolt; 
-    bo_jolt.init(render_jolt);
-
-    shader_bilb.    create_ssbo(4, scene.getBufferSize(),       scene.getBufferData());
-    shader_bilb.    create_ssbo(7, animator.getBufferSize(),    animator.getBufferData());
-    
-    BufferObject    bo_player; 
-    bo_player.renderPool.insert(billboard.vertices, billboard.indices, 10);
+    BufferObject bo_player; 
+    bo_player.renderPool.insert(billboard.vertices, billboard.indices, 3);
     bo_player.init();
 
-    // note: shader binding 10 for user interface
-    // note: shader binding 11 for user interface
+    // using sceene bo_player insert is instance no matrix data
+    ssbo.add("BillboardScenePositions", scene.getBufferSize(), scene.getBufferData());
+
+    Shader_2 playerShader(shader_bb_vs, shader_nBindless_fs);
+    playerShader.attachSSBO(ssbo.find("BillboardScenePositions"), shaderTypeEnum::vertShader);
+    playerShader.attachCode(shaderTypeEnum::vertShader);
+    playerShader.attachCode(shaderTypeEnum::fragShader);
+    playerShader.linkProgram();
 
 
     /* Loop until the user closes the window */
@@ -292,7 +259,6 @@ int main(void)
         lastTick = currentTime;
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTick;
-        // deltaTime = fmax(currentTime - lastTick, 0.001f);
         
         controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
         userInterface.      update(deltaTime);      // update before player controller to stop player movement
@@ -300,24 +266,20 @@ int main(void)
         scene.              update(0, v(playerController.position)); // Update billboard
         camera.             moveTo(v(playerController.position));   // Move camera to player's new position
 
-        // cout << deltaTime << endl;
         /* physics */
         jolt.update(deltaTime); // physics tick
-        animator.update(deltaTime);
+        // animator.update(deltaTime);
 
-        shader_jolt.update_ssbo(0); // matrices
-        shader_bilb.update_ssbo(0); // vec3 positions
-        shader_bilb.update_ssbo(1); // animations indices
+        ssbo.updateAll();
 
         /* Render here */
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        shader_version2.draw(camera, bo_main);      // render only insert into render
-        shader_jolt.draw(camera, bo_jolt);      // physics objects
-        shader_bilb.draw(camera, bo_player);    // billboards
+        mainShader.draw(camera, bo_main, 1);  // render only insert into render
+        // playerShader.draw(camera, bo_player);    // billboards
 
-        userInterface.draw();                   // user interface
+        // userInterface.draw();                   // user interface
 
         /* Swap front and back buffers */
         glfwSwapBuffers(window);

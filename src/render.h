@@ -95,8 +95,8 @@ namespace DaSilva{
             void draw();
 
             // when using local renderpool
-            const void* getBufferData();
-            uint getBufferSize();
+            const void* getRenderPoolBufferData();
+            uint getRenderPoolBufferSize();
     };
 
 }

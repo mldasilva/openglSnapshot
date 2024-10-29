@@ -2,7 +2,7 @@
 
 // //ssbo
 // offset expects a 16 byte offset between elements, so even tho vec3 is all we use vec4
-layout(std430, binding = 4) readonly buffer InstanceMatricies {
+layout(std430, binding = 0) readonly buffer InstanceMatricies {
     vec4 instancedMatrix[];
 };
 

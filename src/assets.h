@@ -29,6 +29,14 @@
 #define UINB_vs (string(SHADER_DIR) + "/user_interface.vs").c_str()
 
 // ===============================================================
+// shaders v2
+// ===============================================================
+// doesnt use bindless texture as of oct 29 subject to change
+
+#define v2_default_vs        (string(SHADER_DIR) + "/2_default.vs").c_str()
+#define v2_default_fs        (string(SHADER_DIR) + "/2_default.fs").c_str()
+
+// ===============================================================
 // models
 // ===============================================================
 
