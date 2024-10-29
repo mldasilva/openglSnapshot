@@ -274,7 +274,7 @@ void UserInterface::draw()
     if(!bBindlessSupport)
     {
         // for texture array supported
-        textures.bindTextureArray(0); // 0 is the slot
+        textures.bindTextureArray(0, 0); // 0 is the slot
         glUniform1i(uiShader.get_uniform_location("u_textureArray"), 0); // 0 is the slot
     }
 

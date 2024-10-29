@@ -51,7 +51,9 @@ namespace DaSilva{
 
     };
 
-    class Texture{
+    // Singleton
+    // usage: Textures& textures = Textures::getInstance();
+    class Textures{
         private:
             vector<uint> textureAddress;
             uint textureAddrIndex;  // keeping track of which textureAddress to push into
@@ -60,16 +62,29 @@ namespace DaSilva{
 
             vector<GLuint64> bindless_texture_handles;
 
-            uint textureArray;
-        public:
+            uint textureArrayCount = 0;
+            vector<uint> texture_arrays;
 
-            Texture();
-            ~Texture();
+            // Private constructor to prevent instantiation
+            Textures();
+            ~Textures();
+        public:
+            // Public method to access the single instance
+            static Textures& getInstance() {
+                static Textures instance;  // Guaranteed to be destroyed, instantiated on first use
+                return instance;
+            }
+
+            // Delete the copy constructor and assignment operator
+            // When you use = delete;, 
+            // it informs the compiler and other programmers that copying instances of the Textures class is not allowed
+            Textures(const Textures&) = delete;
+            Textures& operator=(const Textures&) = delete;
 
             void loadTexture(const char * filepath, uint textureSlot);
             void loadTexture(const char * filepath);
             void loadTextureArray(vector<string> filepaths);
-            void bindTextureArray(uint slot);
+            void bindTextureArray(uint slot, uint index);
 
             GLuint64* getBufferData();
             uint getBufferSize();

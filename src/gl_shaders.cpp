@@ -285,14 +285,14 @@ uint DaSilva::Shader::getID()
 //
 // =======================================================================================
 
-DaSilva::Texture::Texture()
+DaSilva::Textures::Textures()
 {
     // cout << "creating texture object..." << endl;
     textureAddrIndex = 0;
     bindless_index = 0;
 }
 
-DaSilva::Texture::~Texture()
+DaSilva::Textures::~Textures()
 {
     for(const uint& id : textureAddress) 
     {
@@ -307,7 +307,7 @@ DaSilva::Texture::~Texture()
 /// @param _textureAddr_ Specifies an address (array) in which the generated texture names are stored.
 /// @param _textureSlot_ Specifies which texture unit to make active. The number of texture units is implementation dependent, but must be at least 80
 /// @param _filepath____ stbi_load filepath of the texture
-void DaSilva::Texture::loadTexture(const char * filepath, uint textureSlot)
+void DaSilva::Textures::loadTexture(const char * filepath, uint textureSlot)
 {
     textureAddress.push_back(0);
     // cout << "loaded texture into address: " << textureAddrIndex << endl;
@@ -350,7 +350,7 @@ void DaSilva::Texture::loadTexture(const char * filepath, uint textureSlot)
 /// @param textures 
 /// @param textureHandle 
 /// @param filepath 
-void DaSilva::Texture::loadTexture(const char * filepath)
+void DaSilva::Textures::loadTexture(const char * filepath)
 {
     //load and create a texture 
     //-------------------------
@@ -396,11 +396,12 @@ void DaSilva::Texture::loadTexture(const char * filepath)
 /// 
 /// disadvantage vs bindless textures is Texture-Array require all textures to be the same size else result in seg fault
 /// @param filepaths 
-void DaSilva::Texture::loadTextureArray(vector<string> filepaths)
+void DaSilva::Textures::loadTextureArray(vector<string> filepaths)
 {
-    // GLuint textureArray;
-    glGenTextures(1, &textureArray);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
+    texture_arrays.push_back(0);
+
+    glGenTextures(1, &texture_arrays[textureArrayCount]);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_arrays[textureArrayCount]);
 
     // Define the array size: width, height, and number of layers (textures)
     int width = 1024; // Width of each texture
@@ -416,6 +417,7 @@ void DaSilva::Texture::loadTextureArray(vector<string> filepaths)
         // Assuming you have texture data in an array of textures:
         stbi_set_flip_vertically_on_load(1);
         unsigned char *data = stbi_load(filepaths[i].c_str(), &temp_width, &temp_height, &temp_nrChannels, 0);
+        // GLenum format = (temp_nrChannels == 4) ? GL_RGBA : GL_RGB;
         glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, i, width, height, 1, GL_RGBA, GL_UNSIGNED_BYTE, data);
         stbi_image_free(data);
     }
@@ -425,22 +427,24 @@ void DaSilva::Texture::loadTextureArray(vector<string> filepaths)
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+    // glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+    textureArrayCount++;
 }
 
-void DaSilva::Texture::bindTextureArray(uint slot)
+void DaSilva::Textures::bindTextureArray(uint slot, uint index)
 {
     glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, textureArray);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_arrays[index]);
 }
 
-GLuint64 *DaSilva::Texture::getBufferData()
+GLuint64 *DaSilva::Textures::getBufferData()
 {
     return bindless_texture_handles.data();
 }
 
-uint DaSilva::Texture::getBufferSize()
+uint DaSilva::Textures::getBufferSize()
 {
     return bindless_texture_handles.size() * sizeof(GLuint64);
 }

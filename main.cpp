@@ -164,11 +164,15 @@ int main(void)
     // ===============================================================
     // textures
     // ===============================================================
-    
-    Texture textures;
+
+
+    Textures& textures = Textures::getInstance();
     textures.loadTextureArray(vector<string>{texture_anim_00, texture_greentop, texture_redtop});
-    textures.bindTextureArray(1); // 1 is the slot
-    // glUniform1i(mainShader.get_uniform_location("u_textureArray"), 0);
+    textures.loadTextureArray(vector<string>{texture_greentop, texture_anim_00, texture_redtop});
+    
+    // binding to slot afterwards else error/black
+    textures.bindTextureArray(1, 0); // 1 is the slot
+    textures.bindTextureArray(2, 1); // 2 is the slot
     
     // ===============================================================
     // blending settings
@@ -252,6 +256,7 @@ int main(void)
     playerShader.attachCode(shaderTypeEnum::fragShader);
     playerShader.linkProgram();
 
+    // playerShader.debugVertShaderOut();
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -277,7 +282,7 @@ int main(void)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
         mainShader.draw(camera, bo_main, 1);  // render only insert into render
-        // playerShader.draw(camera, bo_player);    // billboards
+        playerShader.draw(camera, bo_player, 1);    // billboards
 
         // userInterface.draw();                   // user interface
 
