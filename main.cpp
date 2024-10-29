@@ -88,7 +88,8 @@ int main(void)
     glfwSwapInterval(0); // Enable vsync
 
     /*m: init glew required to be after glfwMakeContextCurrent()
-    glew site: First you need to create a valid OpenGL rendering context and call glewInit() to initialize the extension entry points*/ 
+    glew site: First you need to create a valid OpenGL rendering context 
+    and call glewInit() to initialize the extension entry points*/ 
     if (GLEW_OK != glewInit()) return -1;
 
     init_glfw_debugger(window);
@@ -100,12 +101,13 @@ int main(void)
     // main
     // ===============================================================
     
-    ShaderStorageBufferObject ssbo;
+    //Singleton
+    ShaderStorageBufferObject& ssbo = ShaderStorageBufferObject::getInstance();
     
     Camera          camera(width, height);
     Controller      controller(window, &camera);    // after camera
 
-    UIManager               userInterface(UINB_vs, UINB_fs, bindless_supported, &controller.interface);
+    UIManager       userInterface(UINB_vs, UINB_fs, bindless_supported, &controller.interface);
     JoltWrapper     jolt; // Now we can create the actual physics system.
 
 
@@ -121,8 +123,6 @@ int main(void)
     // test world scene
     // ===============================================================
     #pragma region jolt world
-
-    Shader_2 joltShader(shader_jolt_vs, shader_nBindless_fs);
 
     RenderPool render_jolt;
 
@@ -165,7 +165,7 @@ int main(void)
     // textures
     // ===============================================================
 
-
+    //Singleton
     Textures& textures = Textures::getInstance();
     textures.loadTextureArray(vector<string>{texture_anim_00, texture_greentop, texture_redtop});
     textures.loadTextureArray(vector<string>{texture_greentop, texture_anim_00, texture_redtop});
@@ -219,6 +219,10 @@ int main(void)
     vector<int> textureIds;
     textureIds.push_back(2);
     textureIds.push_back(0);
+    textureIds.push_back(1);
+    textureIds.push_back(0);
+    textureIds.push_back(2);
+    textureIds.push_back(0);
 
     // making bufferObject with all the vertices and indices
     BufferObject bo_main; 
@@ -228,35 +232,36 @@ int main(void)
 
     // making ssbo
     ssbo.add("Render", bo_main.getRenderPoolBufferSize(), bo_main.getRenderPoolBufferData());
-    ssbo.add("Textures", textureIds.size() * sizeof(int), textureIds.data());
+    ssbo.add("TextureIDs", textureIds.size() * sizeof(int), textureIds.data());
 
     // make shader and attach ssbo
     Shader_2 mainShader(v2_default_vs, v2_default_fs);
     mainShader.attachSSBO(ssbo.find("Render"), shaderTypeEnum::vertShader);
-    mainShader.attachSSBO(ssbo.find("Textures"), shaderTypeEnum::fragShader);
-
-    mainShader.attachCode(shaderTypeEnum::vertShader);
-    mainShader.attachCode(shaderTypeEnum::fragShader);
-    mainShader.linkProgram();
+    mainShader.attachSSBO(ssbo.find("TextureIDs"), shaderTypeEnum::fragShader);
+    mainShader.linkProgram(true);
     
     // ===============================================================
     // billboards including player
     // ===============================================================
     
-    BufferObject bo_player; 
-    bo_player.renderPool.insert(billboard.vertices, billboard.indices, 3);
-    bo_player.init();
+    BufferObject bo_plyr; 
+    bo_plyr.renderPool.insert(billboard.vertices, billboard.indices, 3);
+    bo_plyr.init();
 
     // using sceene bo_player insert is instance no matrix data
     ssbo.add("BillboardScenePositions", scene.getBufferSize(), scene.getBufferData());
 
-    Shader_2 playerShader(shader_bb_vs, shader_nBindless_fs);
-    playerShader.attachSSBO(ssbo.find("BillboardScenePositions"), shaderTypeEnum::vertShader);
-    playerShader.attachCode(shaderTypeEnum::vertShader);
-    playerShader.attachCode(shaderTypeEnum::fragShader);
-    playerShader.linkProgram();
+    Shader_2 plyrShader(v2_billboard_vs, v2_billboard_fs);
+    plyrShader.attachSSBO(ssbo.find("BillboardScenePositions"), shaderTypeEnum::vertShader);
+    plyrShader.attachSSBO(ssbo.find("TextureIDs"), shaderTypeEnum::fragShader); // use same ssbo
+    plyrShader.linkProgram(true);
 
-    // playerShader.debugVertShaderOut();
+    // jolt
+    Shader_2 joltShader(v2_default_vs, v2_default_fs);
+    ssbo.add("joltMatrix", jolt.getBufferSize(), jolt.getBufferData());
+    joltShader.attachSSBO(ssbo.find("joltMatrix"), shaderTypeEnum::vertShader);
+    joltShader.attachSSBO(ssbo.find("TextureIDs"), shaderTypeEnum::fragShader);
+    joltShader.linkProgram(true);
 
     /* Loop until the user closes the window */
     while (!glfwWindowShouldClose(window))
@@ -281,9 +286,9 @@ int main(void)
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         
-        mainShader.draw(camera, bo_main, 1);  // render only insert into render
-        playerShader.draw(camera, bo_player, 1);    // billboards
-
+        mainShader.draw(camera, bo_main, 1);    // render only insert into render
+        plyrShader.draw(camera, bo_plyr, 1);    // player
+        joltShader.draw(camera, bo_jolt, 1);    // jolt
         // userInterface.draw();                   // user interface
 
         /* Swap front and back buffers */
@@ -291,8 +296,6 @@ int main(void)
 
         /* Poll for and process events */
         glfwPollEvents();
-
-        // cout << sizeof(vec3) << endl;
     }
 
     cout << endl;

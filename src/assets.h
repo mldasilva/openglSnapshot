@@ -33,9 +33,11 @@
 // ===============================================================
 // doesnt use bindless texture as of oct 29 subject to change
 
-#define v2_default_vs        (string(SHADER_DIR) + "/2_default.vs").c_str()
-#define v2_default_fs        (string(SHADER_DIR) + "/2_default.fs").c_str()
+#define v2_default_vs       (string(SHADER_DIR) + "/2_default.vs").c_str()
+#define v2_default_fs       (string(SHADER_DIR) + "/2_default.fs").c_str()
 
+#define v2_billboard_vs     (string(SHADER_DIR) + "/2_billboard.vs").c_str()
+#define v2_billboard_fs     (string(SHADER_DIR) + "/2_billboard.fs").c_str()
 // ===============================================================
 // models
 // ===============================================================

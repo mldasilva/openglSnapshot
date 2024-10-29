@@ -92,7 +92,7 @@ class UserInterface
         RenderPool uiRenderPool;
         BufferObject uiBufferObject;
 
-        Textures textures;                           // user interface controls its own textures
+        // Textures textures;                           // user interface controls its own textures
         
         controllerI *controller_interface;          // pointer to controller interface
 

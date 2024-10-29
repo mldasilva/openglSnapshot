@@ -153,8 +153,6 @@ Shader_2::Shader_2(const char* vertexPath, const char* fragmentPath)
     vertexCode      = LoadFileToStringv2(vertexPath);
     fragmentCode    = LoadFileToStringv2(fragmentPath);
 
-    id = glCreateProgram(); // remove if uncomment below
-
 
     // const char* vShaderCode = vertexCode.c_str();
     // const char * fShaderCode = fragmentCode.c_str();
@@ -219,30 +217,6 @@ void Shader_2::checkCompileErrors(unsigned int shader, std::string type)
     }
 }
 
-void Shader_2::replaceBindings(int ssboCount, shaderTypeEnum shaderType)
-{
-    std::string toReplace = "binding = 99"; // out of bounds binding max is 80
-    std::string replacement = "binding = "+ std::to_string(ssboCount);
-
-    if(shaderType == shaderTypeEnum::vertShader)
-    {
-        size_t pos = vertexCode.find(toReplace);
-        if (pos != std::string::npos) {
-            // Replace "binding = 0" with "binding = 1"
-            vertexCode.replace(pos, toReplace.length(), replacement);
-        }
-    }
-    if(shaderType == shaderTypeEnum::fragShader)
-    {
-        size_t pos = fragmentCode.find(toReplace);
-        if (pos != std::string::npos) {
-            // Replace "binding = 0" with "binding = 1"
-            fragmentCode.replace(pos, toReplace.length(), replacement);
-        }
-    }
-    
-}
-
 void Shader_2::draw(Camera& camera, DaSilva::BufferObject& buffer, int textureSlot)
 {
     // Use the shader program
@@ -252,6 +226,17 @@ void Shader_2::draw(Camera& camera, DaSilva::BufferObject& buffer, int textureSl
     glUniformMatrix4fv(get_uniform_location("u_view"), 1, GL_FALSE, glm::value_ptr(camera.view));
     glUniformMatrix4fv(get_uniform_location("u_projection"), 1, GL_FALSE, glm::value_ptr(camera.projection));
     
+    glUniform1i(get_uniform_location("u_textureArray"), textureSlot);
+    // glUniform1i(get_uniform_location("u_textureSampler"), 0); // test for sampler2d non bindless texture alternative
+
+    buffer.draw();
+}
+
+void Shader_2::draw(DaSilva::BufferObject& buffer, int textureSlot)
+{
+    // Use the shader program
+    glUseProgram(id);
+
     glUniform1i(get_uniform_location("u_textureArray"), textureSlot);
     // glUniform1i(get_uniform_location("u_textureSampler"), 0); // test for sampler2d non bindless texture alternative
 
@@ -297,79 +282,80 @@ uint Shader_2::getID()
     return id;
 }
 
-string Shader_2::debugVertShaderOut()
+string Shader_2::debug_vertShaderOut()
 {
     // replaceBindings(169);
     cout << vertexCode << endl;
     return vertexCode;
 }
 
-string Shader_2::debugFragShaderOut()
+string Shader_2::debug_fragShaderOut()
 {
     cout << fragmentCode << endl;
     return fragmentCode;
 }
 
-bool Shader_2::attachSSBO(int binding, shaderTypeEnum shaderType)
+void Shader_2::attachSSBO(int binding, shaderTypeEnum shaderType)
 {
-    replaceBindings(binding, shaderType);
+    std::string toReplace = "binding = 99"; // out of bounds binding max is 80
+    std::string replacement = "binding = "+ std::to_string(binding);
 
-    return false;
-}
-
-bool Shader_2::attachCode(shaderTypeEnum shaderType)
-{
     if(shaderType == shaderTypeEnum::vertShader)
     {
-        // vertex shader
-        // unsigned int vertex;
-        const char* vShaderCode = vertexCode.c_str();
-
-        vertex = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertex, 1, &vShaderCode, nullptr);
-        glCompileShader(vertex);
-        checkCompileErrors(vertex, "VERTEX");
-
-        glAttachShader(id, vertex);
-        // glDeleteShader(vertex);
-        return true;
+        size_t pos = vertexCode.find(toReplace);
+        if (pos != std::string::npos) {
+            // Replace "binding = 0" with "binding = 1"
+            vertexCode.replace(pos, toReplace.length(), replacement);
+        }
     }
-
     if(shaderType == shaderTypeEnum::fragShader)
     {
-        // vertex shader
-        // unsigned int fragment;
-        const char* vShaderCode = fragmentCode.c_str();
-
-        fragment = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragment, 1, &vShaderCode, nullptr);
-        glCompileShader(fragment);
-        checkCompileErrors(fragment, "FRAGMENT");
-
-        glAttachShader(id, fragment);
-        // glDeleteShader(fragment);
-        return true;
+        size_t pos = fragmentCode.find(toReplace);
+        if (pos != std::string::npos) {
+            // Replace "binding = 0" with "binding = 1"
+            fragmentCode.replace(pos, toReplace.length(), replacement);
+        }
     }
-
-    return false;
 }
 
-bool Shader_2::linkProgram()
+void Shader_2::linkProgram(bool isCamera)
 {
+    const char* vShaderCode = vertexCode.c_str();
+    const char* fShaderCode = fragmentCode.c_str();
+
+    // 2. compile shaders
+    unsigned int vertex, fragment;
+
+    // vertex shader
+    vertex = glCreateShader(GL_VERTEX_SHADER);
+    glShaderSource(vertex, 1, &vShaderCode, nullptr);
+    glCompileShader(vertex);
+    checkCompileErrors(vertex, "VERTEX");
+
+    // fragment Shader
+    fragment = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment, 1, &fShaderCode, nullptr);
+    glCompileShader(fragment);
+    checkCompileErrors(fragment, "FRAGMENT");
+
+    // shader Program
+    id = glCreateProgram();
+    glAttachShader(id, vertex);
+    glAttachShader(id, fragment);
     glLinkProgram(id);
     checkCompileErrors(id, "PROGRAM");
 
-    // caching typical variables
+    if(isCamera)
+    {
+        // two gl uniforms that will be const in camera shaders
+        set_uniform_location("u_view");
+        set_uniform_location("u_projection");
+    }
 
-    // two gl uniforms that will be const in camera shaders
-    set_uniform_location("u_view");
-    set_uniform_location("u_projection");
-    // texture array 
     set_uniform_location("u_textureArray");
 
-    // delete the shaders as they're linked into our program now and no longer necessary
+    // delete the shaders as they're linked into our program now 
+    // and no longer necessary
     glDeleteShader(vertex);
     glDeleteShader(fragment);
-
-    return true;
 }

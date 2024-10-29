@@ -70,7 +70,8 @@ namespace DaSilva{
             ~Textures();
         public:
             // Public method to access the single instance
-            static Textures& getInstance() {
+            static Textures& getInstance() 
+            {
                 static Textures instance;  // Guaranteed to be destroyed, instantiated on first use
                 return instance;
             }
