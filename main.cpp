@@ -60,18 +60,13 @@ int main(void)
 {
     GLFWwindow* window;
     /* Initialize the library */
-    if (!glfwInit())
-        return -1;
-
+    if (!glfwInit()) { return -1; }
+        
     glfw_hints();
 
     /* Create a windowed mode window and its OpenGL context */
     window = glfwCreateWindow(1280, 720, "Hello World", nullptr, nullptr);
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
+    if (!window) { glfwTerminate(); return -1; }
 
     float width = 1280;
     float height = 720;
@@ -80,9 +75,6 @@ int main(void)
     double currentTime = 0;
     double lastTick = 0;
 
-    bool imGuiHovered = false;
-
-    bool bindless_supported = false;
     /* Make the window's context current */
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0); // Enable vsync
@@ -90,12 +82,12 @@ int main(void)
     /*m: init glew required to be after glfwMakeContextCurrent()
     glew site: First you need to create a valid OpenGL rendering context 
     and call glewInit() to initialize the extension entry points*/ 
-    if (GLEW_OK != glewInit()) return -1;
+    if (GLEW_OK != glewInit()) { return -1; }
 
     init_glfw_debugger(window);
 
     // Check if bindless textures are supported
-    bindless_supported = (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64"));
+    // bool bindless_supported = (glewIsSupported("GL_ARB_bindless_texture") && glewIsSupported("GL_ARB_gpu_shader_int64"));
 
     // ===============================================================
     // main
@@ -107,9 +99,8 @@ int main(void)
     Camera          camera(width, height);
     Controller      controller(window, &camera);    // after camera
 
-    UIManager       userInterface(UINB_vs, UINB_fs, bindless_supported, &controller.interface);
+    UIManager       userInterface(UINB_vs, UINB_fs, false, &controller.interface);
     JoltWrapper     jolt; // Now we can create the actual physics system.
-
 
     // ===============================================================
     // model loading
@@ -219,10 +210,6 @@ int main(void)
     vector<int> textureIds;
     textureIds.push_back(2);
     textureIds.push_back(0);
-    textureIds.push_back(1);
-    textureIds.push_back(0);
-    textureIds.push_back(2);
-    textureIds.push_back(0);
 
     // making bufferObject with all the vertices and indices
     BufferObject bo_main; 
@@ -231,13 +218,12 @@ int main(void)
     bo_main.init();
 
     // making ssbo
-    ssbo.add("Render", bo_main.getRenderPoolBufferSize(), bo_main.getRenderPoolBufferData());
+    ssbo.add("Render", bo_main.renderPool.getBuffer());
     ssbo.add("TextureIDs", textureIds.size() * sizeof(int), textureIds.data());
 
     // make shader and attach ssbo
     Shader_2 mainShader(v2_default_vs, v2_default_fs);
-    mainShader.attachSSBO(ssbo.find("Render"), shaderTypeEnum::vertShader);
-    mainShader.attachSSBO(ssbo.find("TextureIDs"), shaderTypeEnum::fragShader);
+    mainShader.attachSSBO(ssbo.find("Render"), ssbo.find("TextureIDs"));
     mainShader.linkProgram(true);
     
     // ===============================================================
@@ -250,17 +236,17 @@ int main(void)
 
     // using sceene bo_player insert is instance no matrix data
     ssbo.add("BillboardScenePositions", scene.getBufferSize(), scene.getBufferData());
-
     Shader_2 plyrShader(v2_billboard_vs, v2_billboard_fs);
-    plyrShader.attachSSBO(ssbo.find("BillboardScenePositions"), shaderTypeEnum::vertShader);
-    plyrShader.attachSSBO(ssbo.find("TextureIDs"), shaderTypeEnum::fragShader); // use same ssbo
+    plyrShader.attachSSBO(ssbo.find("BillboardScenePositions"), ssbo.find("TextureIDs"));
     plyrShader.linkProgram(true);
 
-    // jolt
+    // ===============================================================
+    // Jolt
+    // ===============================================================
+
     Shader_2 joltShader(v2_default_vs, v2_default_fs);
     ssbo.add("joltMatrix", jolt.getBufferSize(), jolt.getBufferData());
-    joltShader.attachSSBO(ssbo.find("joltMatrix"), shaderTypeEnum::vertShader);
-    joltShader.attachSSBO(ssbo.find("TextureIDs"), shaderTypeEnum::fragShader);
+    joltShader.attachSSBO(ssbo.find("joltMatrix"), ssbo.find("TextureIDs"));
     joltShader.linkProgram(true);
 
     /* Loop until the user closes the window */
@@ -270,7 +256,7 @@ int main(void)
         currentTime = glfwGetTime();
         deltaTime = currentTime - lastTick;
         
-        controller.         mouse_controls(window, deltaTime, !imGuiHovered);       
+        controller.         mouse_controls(window, deltaTime, true); // bug if false still works   
         userInterface.      update(deltaTime);      // update before player controller to stop player movement
         playerController.   update(deltaTime);      // Update player first
         scene.              update(0, v(playerController.position)); // Update billboard
@@ -280,7 +266,8 @@ int main(void)
         jolt.update(deltaTime); // physics tick
         // animator.update(deltaTime);
 
-        ssbo.updateAll();
+        ssbo.update("BillboardScenePositions");
+        // ssbo.updateAll();
 
         /* Render here */
         glClearColor(0.0f, 0.2f, 0.3f, 0.1f);

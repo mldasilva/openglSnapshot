@@ -288,6 +288,11 @@ uint DaSilva::RenderPool::getBufferSize()
     return matrices.size() * sizeof(mat4);
 }
 
+storageStruct DaSilva::RenderPool::getBuffer()
+{
+    return storageStruct({matrices.size() * sizeof(mat4), matrices.data()});
+}
+
 /// @brief 
 /// @param v 
 /// @param i 

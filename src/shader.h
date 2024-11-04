@@ -18,6 +18,9 @@ enum shaderTypeEnum
 {
     none, vertShader, fragShader
 };
+
+
+
 //==========================================
 //=        Version 2 of gl_shaders
 //==========================================
@@ -31,7 +34,7 @@ class ShaderStorageBufferObject
     private:
         unordered_map<string, int> ssboIDS; // ssnoName to IDS
 
-        uint ssboCount = 0; // not in use might remove
+        uint ssboCount = 0; // used as ssbo id
 
         vector<uint>        ssbo;       // handles
         vector<void*>       ssbo_map;
@@ -61,10 +64,14 @@ class ShaderStorageBufferObject
         ShaderStorageBufferObject& operator=(const ShaderStorageBufferObject&) = delete;
 
         bool add(string ssboName, uint size, const void* data);
+        bool add(string ssboName, storageStruct input);
         int find(string ssboName);
 
         // use with caution
         void updateAll();
+
+        //proper update
+        bool update(string name);
 };
 
 // shader v2 uses ShaderStorageBufferObject class for global ssbo management
@@ -82,6 +89,12 @@ class Shader_2{
         void set_uniform_location(const char *name);
         int  get_uniform_location(const char *name);
 
+        string debug_vertShaderOut();
+        string debug_fragShaderOut();
+
+        void use();
+        uint getID();
+
     public:
         Shader_2(const char* vertexPath, const char* fragmentPath);
         ~Shader_2();
@@ -89,12 +102,7 @@ class Shader_2{
         void draw(Camera& camera, DaSilva::BufferObject& buffer, int textureSlot);
         void draw(DaSilva::BufferObject& buffer, int textureSlot);
 
-        void use();
-        uint getID();
-
-        string debug_vertShaderOut();
-        string debug_fragShaderOut();
-
         void attachSSBO(int binding, shaderTypeEnum shaderType);
+        void attachSSBO(int vsBinding, int fsBinding);
         void linkProgram(bool isCamera);
 };

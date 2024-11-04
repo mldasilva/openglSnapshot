@@ -57,6 +57,26 @@ bool ShaderStorageBufferObject::add(string ssboName, uint size, const void *data
     return false;
 }
 
+bool ShaderStorageBufferObject::add(string ssboName, storageStruct input)
+{
+    const auto _ssbo = ssboIDS.find(ssboName);
+            
+    if (_ssbo == ssboIDS.end()) 
+    {
+        // std::cout << "ssbo not found" << std::endl; 
+        ssboIDS.insert({ssboName, ssboCount});
+        create_ssbo(ssboCount, input.size, input.data);
+        ssboCount++;
+
+        return true;
+    }
+     
+    return false;
+}
+
+/// @brief 
+/// @param ssboName 
+/// @return ssbo binding index
 int ShaderStorageBufferObject::find(string ssboName)
 {
     if (ssboIDS.find(ssboName) != ssboIDS.end()) 
@@ -74,6 +94,20 @@ void ShaderStorageBufferObject::updateAll()
     {
         update_ssbo(i);
     }
+}
+
+/// @brief 
+/// @param name ssbo name
+/// @return true is successful
+bool ShaderStorageBufferObject::update(string name)
+{
+    auto entry = ssboIDS.find(name);
+    if (entry != ssboIDS.end()) 
+    {
+        memcpy(ssbo_map[entry->second], ssbo_data[entry->second], ssbo_size[entry->second]);
+        return true;
+    }
+    return false;
 }
 
 //CREATE_SHADER_BUFFER_STORAGE
@@ -316,6 +350,27 @@ void Shader_2::attachSSBO(int binding, shaderTypeEnum shaderType)
             fragmentCode.replace(pos, toReplace.length(), replacement);
         }
     }
+}
+
+void Shader_2::attachSSBO(int vsBinding, int fsBinding)
+{
+    string toReplace = "binding = 99"; // out of bounds binding max is 80
+    string replacement = "binding = "+ to_string(vsBinding);
+
+    size_t pos = vertexCode.find(toReplace);
+    if (pos != string::npos) 
+    {
+        vertexCode.replace(pos, toReplace.length(), replacement);
+    }
+    
+    replacement = "binding = "+ to_string(fsBinding);
+
+    pos = fragmentCode.find(toReplace);
+    if (pos != string::npos) 
+    {
+        fragmentCode.replace(pos, toReplace.length(), replacement);
+    }
+    
 }
 
 void Shader_2::linkProgram(bool isCamera)

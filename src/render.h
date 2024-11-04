@@ -4,6 +4,12 @@
 #include <glew.h>
 #include "glmath.h"
 
+struct storageStruct
+{
+    ulong size;
+    const void *data;
+};
+
 namespace DaSilva{
     // https://ktstephano.github.io/rendering/opengl/mdi
     // Struct for MultiDrawElements
@@ -68,6 +74,7 @@ namespace DaSilva{
 
             const void* getBufferData();
             uint getBufferSize();
+            storageStruct getBuffer();
     };
 
     class BufferObject
