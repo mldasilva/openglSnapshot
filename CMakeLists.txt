@@ -1,6 +1,9 @@
-cmake_minimum_required(VERSION 3.20.0)
+cmake_minimum_required(VERSION 3.31.0)
 
 project(isometric_plus VERSION 0.1.0 LANGUAGES C CXX)
+
+# change jolyphysics cmake requirement to 3.31 to rid of policy warnings
+# cmake_policy(SET CMP0177 NEW)
 
 # ///////////////////////////////////////////////////////////////
 
